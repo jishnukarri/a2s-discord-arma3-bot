@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+#bot log
+a2s-main.log
+
+.env
