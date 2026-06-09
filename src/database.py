@@ -12,7 +12,7 @@ class BotDatabase:
         self.cursor = self.database.cursor()
         if os.path.exists(database_file) != True:
             #leaderboard db
-            self.cursor.execute('CREATE TABLE database (player_name TEXT, kills INTEGER, month TEXT, PRIMARY KEY (player_name,month))')
+            self.cursor.execute('CREATE TABLE database (player_name TEXT, kills INTEGER,playtime INTEGER, month TEXT, PRIMARY KEY (player_name,month))')
             #message db
             self.cursor.execute('CREATE TABLE messages (id INTEGER, leaderboard INTEGER, status INTEGER, PRIMARY KEY(id))')
             self.cursor.execute("INSERT INTO messages(id,leaderboard,status) VALUES (1,000,000)")
@@ -44,9 +44,9 @@ class BotDatabase:
         self.cursor.execute("SELECT * FROM database")
         leaderboard = self.cursor.fetchall()
         return leaderboard
-    def updateLeaderboard(self,player_name:str, kill_increase:int) -> None:
+    def updateLeaderboard(self,player_name:str, kill_increase:int, playtimeIncrease:int) -> None:
         current_time = datetime.datetime.now().strftime("%B-%Y")
         # this deals with both update value + creating a new row for the player every month
-        query = f"INSERT INTO database(player_name, kills, month) VALUES({player_name},{kill_increase},{current_time}) ON CONFLICT(player_name,month) DO UPDATE SET kills = kills + 10;"
+        query = f"INSERT INTO database(player_name, kills, time, month) VALUES({player_name},{kill_increase}{playtimeIncrease},{current_time}) ON CONFLICT(player_name,month) DO UPDATE SET kills = kills + {kill_increase}, playtime = playtime + {playtimeIncrease};"
         self.cursor.execute(query)
     
