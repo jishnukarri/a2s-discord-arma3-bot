@@ -13,3 +13,6 @@ wheels/
 a2s-main.log
 
 .env
+*.db
+notes.md
+CHANGES.md
