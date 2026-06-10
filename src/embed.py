@@ -18,7 +18,7 @@ def createLeaderboard(leaderboard:list, config:dict) -> discord.Embed:
     for row in leaderboard:
         table["Name"].append(row[0])
         table["Kills"].append(row[1])
-        table["Time Played"].append(row[3])
+        table["Time Played"].append(row[2])
     embed = discord.Embed(
         title=title(config['title']), #Lambda Function - Title
         timestamp=datetime.now())
@@ -26,7 +26,8 @@ def createLeaderboard(leaderboard:list, config:dict) -> discord.Embed:
                     value=f"""
                     ```md
                     {tabulate(table,headers="keys")}
+                    ```
                     """)
-    if (config['footer']):
-        embed.set_footer(text=config['footer'].text,icon_url=config['footer'].image)
+    if (config.get('footer')):
+        embed.set_footer(text=config.get('footer').text,icon_url=config.get('footer').image)
     return embed
