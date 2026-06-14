@@ -1,27 +1,22 @@
 import discord
-import datetime
+from datetime import datetime
 from tabulate import tabulate
 
 
 class Embeds:
-
     # Embed Functions
-    leaderboardTitle = lambda title: (
+    leaderboardTitle = lambda self, title: (
         f"{title}'s Leaderboard" if (title) else "Leaderboard"
     )
 
-
-    statusTitle = lambda title: (
+    statusTitle = lambda self, title: (
         f"{title}'s Server Status" if (title) else "Server Status"
     )
-
 
     def __init__(self, title, footer, footer_icon):
         self.title = title
         self.footer = footer
         self.footer_icon = footer_icon
-
-
 
     """createLeaderboard - generates discord leaderboard emebed for discordtasks
 
@@ -50,11 +45,13 @@ class Embeds:
                         ```
                         """,
         )
-        if self.footer:
+        if self.footer and not self.footer_icon:
+            embed.set_footer(text=self.footer)
+        elif not self.footer and not self.footer_icon:
+            pass
+        else:
             embed.set_footer(text=self.footer, icon_url=self.footer_icon)
         return embed
-
-
 
     """createServerStatus - generates discord emebed used by discord tasks
 
@@ -82,6 +79,10 @@ class Embeds:
         count = 0
         for server in servers:
             count = count + 1
+            if server.current_players <= 0:
+                player_table = "No Players Currently"
+            else:
+                player_table = tabulate(server.player_table)
             embed.add_field(
                 name=layout_name.format(
                     index=count,
@@ -90,11 +91,16 @@ class Embeds:
                     all_players=server.max_players,
                 ),
                 value=layout_body.format(
-                    current_player_table=tabulate(server.player_table),
-                    last_updated=server.last_updated
+                    current_player_table=player_table,
+                    last_updated=server.last_updated,
                 ),
-                inline=True
+                inline=True,
             )
-            
-        embed.footer(text=self.title)
+
+        if self.footer and not self.footer_icon:
+            embed.set_footer(text=self.footer)
+        elif not self.footer and not self.footer_icon:
+            pass
+        else:
+            embed.set_footer(text=self.footer, icon_url=self.footer_icon)
         return embed

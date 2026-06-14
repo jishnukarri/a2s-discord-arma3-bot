@@ -29,7 +29,7 @@ class BotDatabase:
     def getMessageID(self) -> dict:
         logger.info("getting message id")
         self.cursor.execute("SELECT leaderboard, status FROM messages WHERE id=1")
-        messages = self.cursor.fetchall()
+        messages = self.cursor.fetchone()
         if (messages[1] == 0) or (messages[2] == 0):
             logger.warning("no message id exists")
             messages = {"status": False}
@@ -66,16 +66,16 @@ class BotDatabase:
     def updateLeaderboard(
         self, player_name: str, kill_increase: int, playtimeIncrease: int
     ) -> None:
-        current_time = datetime.datetime.now().strftime("%B-%Y")
+        current_month = datetime.datetime.now().strftime("%B-%Y")
         # this deals with both update value + creating a new row for the player every month
         self.cursor.execute(
-            "INSERT INTO database(player_name, kills, time, month) VALUES(?,?,?,?)"
+            "INSERT INTO database(player_name, kills, playtime, month) VALUES(?,?,?,?)"
             "ON CONFLICT(player_name,month) DO UPDATE SET kills = kills + ?, playtime = playtime + ?;",
             (
                 player_name,
                 kill_increase,
                 playtimeIncrease,
-                current_time,
+                current_month,
                 kill_increase,
                 playtimeIncrease,
             ),
