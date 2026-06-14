@@ -21,7 +21,7 @@ class serverRegistry:
         self.active_servers = {}
         self.mod_dictonary = {}
         self.fetch_map_servers()
-        
+
     def fetch_map_servers(self):
         try:
             content_file = requests.get(f"{RAW_REPO_LINK}/content.json").json()
@@ -50,7 +50,7 @@ class serverRegistry:
 
             # Mods
             mod_dictonary = {}
-            for name, id in steam_file.items:
+            for name, id in steam_file.items():
                 link = (
                     content_file.get("mods", {}).get(name)
                     or content_file.get("optionals", {}).get(name)
