@@ -21,7 +21,7 @@ class a2sQuery:
             logger.error(
                 f'SERVER_TUPLE FOR {serverTuple} has been configured incorrectly. \n Format : ("SERVER_HOST",SERVER_PORT)'
             )
-            self.getServerInfo()
+        self.getServerInfo()
 
     def getServerInfo(self):
         if time.time() - self.serverInfo[1] > 10:
@@ -37,16 +37,19 @@ class a2sQuery:
         return self.serverInfo[0]
 
     def getServerRules(self):
-        if time.time() - self.rules[1] > 10:
+        print(self.rules[1])
+        if (self.rules[1] == 0) or (time.time() - self.rules[1] > 10):
             try:
+                print(self.serverInfo[0].folder)
                 # check if server is arma3 to use arma3query
-                if self.serverInfo[0].game == "Arma 3":
+                if self.serverInfo[0].folder == "Arma3":
                     self.rules[0] = arma3query.arma3rules(self.serverTuple)
+
             except Exception as e:
                 logger.error(
-                    f"Unable to fetch server rules for {self.serverTuple} \n Errpr: {e}"
+                    f"Unable to fetch server rules for {self.serverTuple} \n Error: {e}"
                 )
-            self.rules[1] = time.time()
+
         return self.rules[0]
 
     def getServerPlayers(self):
