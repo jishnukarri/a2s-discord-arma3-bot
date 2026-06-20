@@ -28,15 +28,15 @@ class BotDatabase:
         logger.info("getting message id")
         self.cursor.execute("SELECT leaderboard, status FROM messages WHERE id=1")
         messages = self.cursor.fetchone()
-        if (messages[1] == 0) or (messages[2] == 0):
+        if (messages[0] == 0) or (messages[1] == 0):
             logger.warning("no message id exists")
             messages = {"status": False}
             return messages
         else:
             logger.info(
-                f"message id exists - leaderboard: {messages[1]}status:{messages[2]}"
+                f"message id exists - leaderboard: {messages[0]}status:{messages[1]}"
             )
-            messages = {"status": True,"leaderboard": messages[1], "statusMsg": messages[2]}
+            messages = {"status": True,"leaderboard": messages[0], "statusMsg": messages[1]}
             return messages
 
     def updateMessageID(self, messages) -> None:
