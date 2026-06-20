@@ -3,12 +3,17 @@ from src.config import LOGGING_FILE
 
 def setup_logging():
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG) 
 
-    handler = logging.FileHandler(filename=LOGGING_FILE)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s : %(message)s"
     )
-    handler.setFormatter(formatter)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
+    handler = logging.FileHandler(filename=LOGGING_FILE)
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(formatter)
     logger.addHandler(handler)
