@@ -10,6 +10,7 @@ LOCAL ENVIROMENT VARIBLES IMPORT
 """
 load_dotenv()
 
+LOGGING_FILE = os.getenv("LOGGING_FILE")
 CLIENT_TOKEN = os.getenv("CLIENT_TOKEN")
 GUILD_ID = int(os.getenv("GUILD_ID"))
 CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
