@@ -133,9 +133,17 @@ class DiscordBot(discord.Client):
             self.database.updateMessageID({"statusMsg": message.id})
             logger.info("Status message sent")
         else:
-            message = await channel.fetch_message(dbMessage.get("statusMsg"))
-            await message.edit(embed=statusEmbed)
-            logger.info("Status message edited")
+            try:
+                    # Attempt to fetch and edit the existing message
+                    message = await channel.fetch_message(dbMessage.get("statusMsg"))
+                    await message.edit(embed=statusEmbed)
+                    logger.info("Status message edited")
+            except discord.NotFound:
+                # Fallback: Create a new message if the old one was deleted
+                logger.warning("Status message not found in channel. Creating a new one.")
+                message = await channel.send(embed=statusEmbed)
+                self.database.updateMessageID({"statusMsg": message.id})
+                logger.info("New status message sent after original was not found")
 
     @updateServerStatus.before_loop
     async def before_serverStatus(self):
