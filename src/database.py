@@ -11,18 +11,16 @@ class BotDatabase:
         logger.info(f"{database_file} - connecting to database")
         self.database = sqlite3.connect(database_file)
         self.cursor = self.database.cursor()
-        if os.path.exists(database_file) != True:
-            # leaderboard db
-            self.cursor.execute(
-                "CREATE TABLE database (player_name TEXT, kills INTEGER,playtime INTEGER, month TEXT, PRIMARY KEY (player_name,month))"
-            )
-            # message db
-            self.cursor.execute(
-                "CREATE TABLE messages (id INTEGER, leaderboard INTEGER, status INTEGER, PRIMARY KEY(id))"
-            )
-            self.cursor.execute(
-                "INSERT INTO messages(id,leaderboard,status) VALUES (1,0,0)"
-            )
+
+        self.cursor.execute(
+            "CREATE TABLE IF NOT EXISTS database (player_name TEXT, kills INTEGER, playtime INTEGER, month TEXT, PRIMARY KEY (player_name, month))"
+        )
+        self.cursor.execute(
+            "CREATE TABLE IF NOT EXISTS messages (id INTEGER, leaderboard INTEGER, status INTEGER, PRIMARY KEY(id))"
+        )
+        self.cursor.execute(
+            "INSERT OR IGNORE INTO messages(id, leaderboard, status) VALUES (1, 0, 0)"
+        )
         self.database.commit()
 
     # Message Functions
@@ -38,22 +36,22 @@ class BotDatabase:
             logger.info(
                 f"message id exists - leaderboard: {messages[1]}status:{messages[2]}"
             )
-            messages = {"leaderboard": messages[1], "status": messages[2]}
+            messages = {"status": True,"leaderboard": messages[1], "statusMsg": messages[2]}
             return messages
 
     def updateMessageID(self, messages) -> None:
-        if (messages[1] == 000) and (messages[2] == 000):
+        if (messages.get("leaderboard") == 000) and (messages.get("statusMsg") == 000):
             logger.error(f"Message ID not returned in updateMessageID: {messages}")
         else:
             logger.info(
-                f"Message ID updated - leaderboard: {messages[1]},status: {messages[2]}"
+                f"Message ID updated - leaderboard: {messages.get("leaderboard")},status: {messages.get("statusMsg")}"
             )
             query = (
                 "INSERT INTO messages(id,leaderboard,status) VALUES(1,?,?)"
                 "ON CONFLICT(id) DO UPDATE SET leaderboard=?,status=?;"
             )
             self.cursor.execute(
-                query, (messages[1], messages[2], messages[1], messages[2])
+                query, (messages.get("leaderboard"), messages.get("statusMsg"), messages.get("leaderboard"), messages.get("statusMsg"))
             )
             self.database.commit()
 
