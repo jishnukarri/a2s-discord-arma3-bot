@@ -1,10 +1,12 @@
-import src.bot as bot
-from src.config import CLIENT_TOKEN
-import src.logger as logger
+def main():
+    # intents = discord.Intents.default()
+    # intents.message_content = True
+
+    # client = MyClient(intents=intents)
+    # client.run('my token goes here')
+    # code once we build the basic bot
+    pass
 
 
-logger.setup_logging()
-
-
-DiscordClient = bot.DiscordBot()
-DiscordClient.run(CLIENT_TOKEN)
+if __name__ == "__main__":
+    main()

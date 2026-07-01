@@ -16,3 +16,4 @@ a2s-main.log
 *.db
 notes.md
 CHANGES.md
+*.test.*

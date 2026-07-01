@@ -1,11 +1,15 @@
 [project]
 name = "a2s-discord-bot"
 version = "0.1.0"
-description = "Add your description here"
+description = "A arma 3 community bot for admins to manage their servers/units"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "discord-py>=2.7.1",
     "dotenv>=0.9.9",
+    "humanize>=4.15.0",
     "python-a2s>=1.4.2",
     "requests>=2.34.2",
+    "sentry-sdk>=2.63.0",
+    "tabulate>=0.10.0",
 ]
