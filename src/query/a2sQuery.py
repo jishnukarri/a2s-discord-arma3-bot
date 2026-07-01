@@ -58,7 +58,7 @@ class Arma3Query:
         while self.running:
             try:
                 await self.getInformation()
-                await self.getRules()
+                #await self.getRules() currently rules are not purposed for anything
                 await self.getPlayers()
                 await asyncio.sleep(interval)
                 logging.info(f"AutoUpdate Server Information: {self.tuple} Success")
