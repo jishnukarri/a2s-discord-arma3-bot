@@ -183,4 +183,4 @@ async def arma3rules_async(addr) -> ArmaRules:
     return _parse_rules_data(rules)
 
 
-print(arma3rules(("80.242.59.106",2303)).__dict__)
+print(arma3rules(("80.242.59.106", 2303)).__dict__)
