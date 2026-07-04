@@ -23,14 +23,14 @@ class Arma3Query:
         }
         self.isReady = False
         self.infoError = False
+        self.task = None
         logging.info(f"Server Object: {self.tuple} Init Success")
-        self.start()
 
     async def getInformation(self):
         try:
             info = a2s.info(address=self.tuple)  # type: ignore
             self.info = {
-                "name": str(info.server_name),
+                "name": info.server_name,
                 "players": int(info.player_count),
                 "max_player": int(info.max_players),
                 "password_protected": info.password_protected,
@@ -102,4 +102,4 @@ class Arma3Query:
             self.task = asyncio.create_task(self.autoUpdateLoop())
 
     def stop(self):
-        self.task.cancel()
+        self.task.cancel()  # type: ignore
