@@ -13,3 +13,8 @@ dependencies = [
     "sentry-sdk>=2.63.0",
     "tabulate>=0.10.0",
 ]
+
+[dependency-groups]
+dev = [
+    "debugpy>=1.8.21",
+]
