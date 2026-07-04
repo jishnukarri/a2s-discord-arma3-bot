@@ -3,6 +3,8 @@ import json
 import os
 import logging
 
+
+load_dotenv()
 # Discord Secrets
 
 CLIENT_TOKEN: str = str(os.getenv("CLIENT_TOKEN", ""))
@@ -14,14 +16,14 @@ DATABASE_FILE: str = str(os.getenv("DATABASE_FILE"))
 
 DATABASE_CONFIG = {}
 if os.path.exists(DATABASE_FILE):
-    with open(DATABASE_FILE, 'r+') as file:
+    with open(DATABASE_FILE, "r+") as file:
         if file.read() == "":
-                file.write("{}")
+            file.write("{}")
     with open(DATABASE_FILE, "r") as file:
         DATABASE_CONFIG = json.load(file)
-        print("loaded")
 else:
     logging.error(f"{DATABASE_FILE} not found in the given path")
+
 
 """
 Functions to add to DATABASE
@@ -34,7 +36,7 @@ def addToDatabase(keys: list, value: int) -> bool:
         return False
     with open(DATABASE_FILE, "w") as file:
         try:
-            current = DATABASE_CONFIG | {}
+            current = DATABASE_CONFIG or {}
             if len(keys) > 1:
                 for key in keys[:-1]:
                     if key not in current:
@@ -42,7 +44,7 @@ def addToDatabase(keys: list, value: int) -> bool:
                     initKey = key
                     current[initKey][keys[-1]] = value
             else:
-                current[keys[len(keys)-1]] = value
+                current[keys[len(keys) - 1]] = value
 
             json.dump(current, indent=4, fp=file)
             logging.info("Data added to config", current)
