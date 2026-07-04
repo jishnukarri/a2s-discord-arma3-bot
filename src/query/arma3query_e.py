@@ -181,6 +181,3 @@ async def arma3rules_async(addr) -> ArmaRules:
     """Async Arma 3 rules query and decode"""
     rules = await asyncio.to_thread(a2s.rules, addr, encoding=None, timeout=3.0)
     return _parse_rules_data(rules)
-
-
-print(arma3rules(("80.242.59.106", 2303)).__dict__)
