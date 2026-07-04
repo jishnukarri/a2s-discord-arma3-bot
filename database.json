@@ -1,0 +1,11 @@
+{
+    "community_info": {
+        "name": "Phantom"
+    },
+    "messageId":{
+        "status":0
+    },
+    "servers": [
+        ["ServerName",["ip/host","port"]]
+    ]
+}
