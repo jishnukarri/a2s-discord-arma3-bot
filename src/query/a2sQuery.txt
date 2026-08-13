@@ -1,0 +1,13 @@
+function loopServerUpdates:
+    start
+    wait 10 seconds #starting with a timeout
+    check if server response failed is above 100:
+        yes:
+        increase timeout to 60
+        self.delayedUpdate = True
+    run methods which update the variables
+    
+    if data is valid from variables above and self.delayedUpdate is True:
+        decrease timeout to 10
+        self.delayedUpdate = False
+    end

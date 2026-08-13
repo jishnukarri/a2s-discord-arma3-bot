@@ -1,105 +1,115 @@
 import a2s
+from a2s.exceptions import BrokenMessageError, BufferExhaustedError
 import src.query.arma3query_e as arma3query_e
-import datetime
+from datetime import datetime
 from humanize import precisedelta
 import asyncio
 import logging
 
 
+class ArmaInfo:
+    def __init__(
+        self,
+        name: str,
+        players: int,
+        maxPlayers: int,
+        passwordProtected: bool,
+        mapName: str,
+    ) -> None:
+        self.name = name
+        self.players = players
+        self.maxPlayers = maxPlayers
+        self.passwordProtected = passwordProtected
+        self.mapName = mapName
+
+class Player:
+    def __init__(self,name:str,score:int,time:int) -> None:
+        self.name = name
+        self.score = score 
+        self.time = time
+
+
 class Arma3Query:
-    def __init__(self, serverTuple: tuple[str, int]) -> None:
-        self.tuple: tuple[str, int] = serverTuple
-        self.info: dict = {
-            "name": "",
-            "players": 0,
-            "max_player": 0,
-            "password_protected": False,
-            "map_name": "",
-        }
-        self.rules: dict = {}
-        self.players: dict[str, list] = {
-            "heading": ["Player Name", "Kills", "Played Time"],
-            "players": [],
-        }
-        self.isReady = False
-        self.infoError = False
-        self.task = None
-        logging.info(f"Server Object: {self.tuple} Init Success")
+    def __init__(self,ip:str,port:int,jsonName) -> None:
+        self.ip:str = ip
+        self.port:int = port
+        self.serverTuple: tuple[str, int] = (self.ip,self.port)
+        self.jsonName:str = jsonName # only way to conntect json db to the object
+        # values
+        self.info = None
+        self.players:list[Player] = []
+        #inital values
+        self.lastUpdated: float = 0
+        self.running:bool = True
+        self.failedRetries:int = 0 #no.of times server failed to respond
+        self.delayedTimeout = 10 #stays 10 if server is active; changes to 60 if the server failes to respond over 1000 times
 
-    async def getInformation(self):
+        self.autoLoopTask = asyncio.create_task(self.loopServerUpdates())
+
+    def _dataUpdated(self):
+        self.lastUpdated = datetime.now().timestamp()
+
+
+    async def loopServerUpdates(self):
+        while self.running == True:
+            oldUpdated =  self.lastUpdated
+
+            await asyncio.to_thread(self._getInfo)
+            await asyncio.to_thread(self._getPlayers)
+            
+            if self.failedRetries >= 200:
+                self.delayedTimeout = 60
+
+            if oldUpdated < self.lastUpdated:
+                logging.info(f"Data has been auto-updated for {self.serverTuple}")
+                if self.delayedTimeout == 60:
+                    self.failedRetries = 0
+                    self.delayedTimeout = 10
+
+            await asyncio.sleep(self.delayedTimeout)     
+    """
+    Methods which update the server infromation
+    """
+    def _getInfo(self):
         try:
-            info = a2s.info(address=self.tuple)  # type: ignore
-            self.info = {
-                "name": info.server_name,
-                "players": int(info.player_count),
-                "max_player": int(info.max_players),
-                "password_protected": info.password_protected,
-                "map_name": info.map_name,
-            }
-            logging.info(f"Server Info: {self.tuple} Success")
-            return self.info
+            info = a2s.info(self.serverTuple) # type: ignore
+            self.info = ArmaInfo(
+                name=info.server_name,
+                players=info.player_count,
+                maxPlayers=info.max_players,
+                passwordProtected=info.password_protected,
+                mapName=info.map_name
+                )
+            logging.info(f"Current information for {self.serverTuple} has been updated")
+            self._dataUpdated()
+            pass
+        except BufferExhaustedError or TimeoutError:
+            logging.error("Server is unable to respond to query",exc_info=True)
+            self.failedRetries += 1
+        except BrokenMessageError:
+            logging.warning("Server failed to send a proper message",exc_info=True)
+            self.failedRetries += 1
         except Exception as e:
-            logging.error(f"Server Info: {self.tuple} Failed", exc_info=True)
-            self.infoError = True
+            logging.warning(f"Server failed due to {e}",exc_info=True)
+            self.failedRetries += 1    
 
-    async def getRules(self):
+    def _getPlayers(self):
         try:
-            self.rules = arma3query_e.arma3rules(self.tuple).__dict__  # type: ignore
-            logging.info(f"Server Rules: {self.tuple} Success")
-            return self.rules
-        except Exception as e:
-            logging.error(f"Server Rules: {self.tuple} Failed", exc_info=True)
-            self.infoError = True
-
-    async def getPlayers(self):
-        try:
-            players = a2s.players(address=self.tuple)  # type: ignore
-            playerObj = []
+            players = a2s.players(self.serverTuple) # type: ignore
+            playerArray = []
             for player in players:
-                player.duration = precisedelta(
-                    datetime.timedelta(seconds=player.duration)
-                )
-                playerObj.append([player.name, player.score, player.duration])
-            self.players["players"] = playerObj
-            logging.info(f"Server Players: {self.tuple} Success")
-            return self.players
+                _localplayer = Player(player.name,player.score,player.duration)
+                playerArray.append(_localplayer)
+            self.players = playerArray
+            logging.info(f"Current player list for {self.serverTuple} has been updated")
+            self._dataUpdated()
+            pass
+        except BufferExhaustedError or TimeoutError:
+            logging.error("Server is unable to respond to query",exc_info=True)
+            self.failedRetries += 1
+        except BrokenMessageError:
+            logging.warning("Server failed to send a proper message",exc_info=True)
+            self.failedRetries += 1
         except Exception as e:
-            logging.error(f"Server Players: {self.tuple} Failed", exc_info=True)
-            self.infoError = True
-
-    async def autoUpdateLoop(self, interval=10):
-        self.running = True
-        while self.running:
-            try:
-                await self.getInformation()
-                # await self.getRules() currently rules are not purposed for anything
-                await self.getPlayers()
-                if self.infoError != True:
-                    self.isReady = True
-                await asyncio.sleep(interval)
-                logging.info(f"AutoUpdate Server Information: {self.tuple} Success")
-            except Exception as e:
-                logging.error(
-                    f"AutoUpdate Server Information: {self.tuple} Failed", exc_info=True
-                )
-
-    # Propertry's
-
-    @property
-    def reqInfo(self):
-        return self.info
-
-    @property
-    def reqRules(self):
-        return self.rules
-
-    @property
-    def reqPlayers(self):
-        return self.players
-
-    def start(self):
-        if self.task is None or self.task.done():
-            self.task = asyncio.create_task(self.autoUpdateLoop())
-
-    def stop(self):
-        self.task.cancel()  # type: ignore
+            logging.warning(f"Server failed due to {e}",exc_info=True)
+            self.failedRetries += 1    
