@@ -34,6 +34,7 @@ class ServerConfig:
         self.ip = ip
         self.port = port
 
+
 def peristData(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -41,22 +42,21 @@ def peristData(func):
         if result is True:
             self.updateDB()
         return result
+
     return wrapper
+
 
 class Database:
     def __init__(self, db_file: str) -> None:
         self.filePath = db_file
         self._loadDB()
 
-
-
-
-    def _loadCleanDB(self,createWrite):
+    def _loadCleanDB(self, createWrite):
         self._saveDB(
             MessageConfig(),
             GuildConfig(),
             [ServerConfig("example.arma.com", 2303)],
-            createWrite
+            createWrite,
         )
         logging.warning(
             "A Fresh copy has been created \n Restarting the bot to continue"
@@ -92,7 +92,7 @@ class Database:
             logging.error("Unknown Error while loading DB.", exc_info=True)
             raise Exception("DB Error \n Check Logs")
 
-    def _saveDB(self, _MConfig, _GConfig, _SsConfig,fileWrite="w"):
+    def _saveDB(self, _MConfig, _GConfig, _SsConfig, fileWrite="w"):
         try:
             db = {
                 "community_info": _GConfig.__dict__,
@@ -118,9 +118,8 @@ class Database:
             logging.error("Unable to save to database file.", exc_info=True)
             raise Exception("Unable to save to database file.\nCheck logs.")
 
-    
     @peristData
-    def addServer(self,serverObject):
+    def addServer(self, serverObject):
         if type(serverObject) == ServerConfig:
             self.serversDATA.append(serverObject)
             logging.info(f"new ServerObject added; {serverObject.__dict__} ")
@@ -130,7 +129,7 @@ class Database:
             raise Exception("Object could'nt be identified")
 
     @peristData
-    def removeServer(self,host:str,port:int):
+    def removeServer(self, host: str, port: int):
         for serverObject in self.serversDATA:
             if (serverObject.ip == host) and (serverObject.host == port):
                 self.serversDATA.remove(serverObject)
@@ -139,8 +138,9 @@ class Database:
             else:
                 logging.warning(f"Server could'nt be found: {serverObject.__dict__}")
                 return False
+
     @peristData
-    def updateCommunityData(self,cDATA):
+    def updateCommunityData(self, cDATA):
         if type(cDATA) == GuildConfig:
             self.guildDATA = cDATA
             logging.info(f"Community Info has been updated: {cDATA.__dict__}")
@@ -148,8 +148,9 @@ class Database:
         else:
             logging.warning(f"Community Info is not valid: {cDATA.__dict__}")
             return False
+
     @peristData
-    def updateMessageID(self,newMessageID):
+    def updateMessageID(self, newMessageID):
         if newMessageID != 0 and type(newMessageID) == int:
             self.messageDATA = MessageConfig(newMessageID)
             logging.info("Message ID in DB has been updated sucessfully")
@@ -157,6 +158,8 @@ class Database:
         else:
             logging.error("Message ID is invalid;")
             return False
+
+
 class Config:
     def __init__(self) -> None:
         self.CLIENT_TOKEN: str = str(os.getenv("CLIENT_TOKEN", ""))
