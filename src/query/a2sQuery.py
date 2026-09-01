@@ -43,7 +43,6 @@ class Arma3Query:
         self.running:bool = True
         self.failedRetries:int = 0 #no.of times server failed to respond
         self.delayedTimeout = 10 #stays 10 if server is active; changes to 60 if the server failes to respond over 1000 times
-
         self.autoLoopTask = asyncio.create_task(self.loopServerUpdates())
 
     def _dataUpdated(self):

@@ -1,175 +1,93 @@
-import discord
-import logging
 from src.query.a2sQuery import Arma3Query
-from src.config import *
-from tabulate import tabulate
-from datetime import datetime
-import humanize
-import time
+from src.config import DATABASE,CONFIG
+import discord 
+from discord.ext import commands,tasks
+import logging
 import asyncio
+import tabulate
 
+servers = []
+loaded = False
 
-# self.mainObject = {
-#     "serverQueryObject": [], #["Name of the server from config",OBJECT]
-#     "serverInformation": [
-#         {
-#             "serverName": "a2sServerName",
-#             "serverPlayerCount": 0,
-#             "serverMaxPlayer":0,
-#             "serverPlayerTable": None,
-#             "passworded": False,
-#               "map_name": ""
-#         }
-#     ] #
-# }
-# Conceptual: Pointing directly to the live data structure in memory - from gemini
-# self.mainObject["serverInformation"][0]["serverPlayerTable"] = self.mainObject["serverQueryObject"][1].live_player_data
+class Server:
+    def __init__(self, ip, port,name) -> None:
+        self.ip = ip
+        self.port = port
+        self.name = name
+        self.createObject()
 
+    def createObject(self):
+        self.object = Arma3Query(
+            ip=self.ip,
+            port=self.port,
+            jsonName=self.name
+        )
 
-class DiscordBot(discord.Client):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.mainObject = {"serverQueryObject": {}, "serverInformation": {}}
+    @property
+    def info(self):
+        return self.object.info
+    @property
+    def players(self):
+        return self.object.players
+    @property
+    def isActive(self):
+        if self.object.failedRetries > 0:
+            return True
+        return False
+    def getTable(self):
+        _players =  []
+        for i in self.players:
+            _players.append(i.__dict__)
+        table = tabulate.tabulate(_players,["Name","Score","Time Played"],tablefmt="rounded_grid")
 
+class Bot(discord.Client):
+    def __init__(self):
+        intents = discord.Intents.default()
+        intents.message_content = True
+
+        super().__init__(intents=intents) 
+        super().run(token=CONFIG.CLIENT_TOKEN) 
+    async def setup_hook(self):
+        if loaded != True:
+            pass
+        for server in DATABASE.serversDATA:
+            _ser = Server(name=server.name,ip=server.ip,port=server.port)
+            servers.append(_ser)
     async def on_ready(self):
-        logging.info(f"Discord bot ready as {self.user}")
-        channel = self.get_channel(CHANNEL_ID)
-        if not hasattr(self, "initialized"):  # checks init
-            if isinstance(channel, discord.TextChannel):
-                self.channel = channel
+        loaded = True
+        logging.info(f"Bot is loaded as {self.user.name}({self.user.id})") # type: ignore
+        self.serverStatusUpdater.start()
 
+    def generateServerStatusEmbed(self):
+        embed = discord.embeds.Embed()
+        embed.title = f"{DATABASE.guildDATA.communityName}'s Server Status"
+        embed.color = discord.Color.default()
+        for server in servers:
+            if server.isActive == True:
+                embed.add_field(
+                    name=server.info.name or server.name,
+                    value=f"```md server.getTable()```"
+                )
+        return embed
+    
+    @tasks.loop(seconds=10)
+    async def serverStatusUpdater(self):
+        channel = self.get_channel(CONFIG.CHANNEL_ID)
+        if isinstance(channel,discord.TextChannel):
+            id = DATABASE.messageDATA.statusMessageID
+            if id == 0:
+                _emebed = self.generateServerStatusEmbed()
+                message = await channel.send(embed=_emebed)
+                DATABASE.updateMessageID(message.id)
+                pass
+            
+            message = await channel.fetch_message(id)
 
-                for server in DATABASE_CONFIG.get("servers"):
-                    # This attaches the vars to live data structure in memory
-                    self.mainObject["serverQueryObject"][str(server[0])] = Arma3Query(
-                        tuple(server[1])
-                    )
-                    self.mainObject["serverQueryObject"][str(server[0])].start()
-                    while (
-                        self.mainObject["serverQueryObject"][str(server[0])].isReady
-                        == False
-                    ):
-                        await asyncio.sleep(0.5)
-                    await self.initStatusEmbed()
-
-                    self.init = True
-
-    async def updateServerInfo(self,interval=8):
-        running = True
-
-        while running:
-            for server in DATABASE_CONFIG.get("servers"):
-                sStuct = {
-                    "serverPlayerCount": self.mainObject["serverQueryObject"][
-                        server[0]
-                    ].reqInfo["players"],
-                    "serverMaxPlayer": self.mainObject["serverQueryObject"][
-                        server[0]
-                    ].reqInfo["max_player"],
-                    "serverPlayerTable": tabulate(
-                        self.mainObject["serverQueryObject"][server[0]].reqPlayers[
-                            "players"
-                        ],
-                        headers=["Name", "Kills", "Time"],
-                        tablefmt="double_outline",
-                        stralign="left",  # text alignment
-                        numalign="left",  # number alignment
-                    ),
-                    "passworded": self.mainObject["serverQueryObject"][
-                        server[0]
-                    ].reqInfo["password_protected"],
-                    "map_name": self.mainObject["serverQueryObject"][server[0]].reqInfo[
-                        "map_name"
-                    ],
-                }
-                title = self.mainObject["serverQueryObject"][server[0]].reqInfo["name"]
-                self.mainObject["serverInformation"][title] = sStuct
-
-                await asyncio.sleep(interval)
-    async def updateStatusMessage(self, interval=10):
-        running = True
-        while running:
-            print("I got called update")
-            sent: bool = False
-            while sent == False:
-                if self.channel:
-                    """
-                    emoji for locked/passsworded : 🔒
-                    
-
-                    command to generate table
-                    """
-                    if len(self.mainObject["serverInformation"]) <= 1:
-                        name = DATABASE_CONFIG["community_info"]["name"] or ""
-                        for server in self.mainObject["serverInformation"]:
-                            server = self.mainObject["serverInformation"][server]
-                            playerCount = f"{str(server['serverPlayerCount'])} / {str(server['serverMaxPlayer'])}"
-                            playerMap = server["map_name"]
-                            playersTable = server["serverPlayerTable"]
-
-                            message = discord.Embed(
-                                color=discord.Color.from_str("#a51e1e"),
-                                title=f"{name}'s Server - {playerCount} - {playerMap}",
-                                description=f"```{playersTable}```",
-                                timestamp=datetime.now(),
-                            )
-
-                        # Todo: once A2S built
-                    messageID = DATABASE_CONFIG["messageId"]["status"]
-                    if messageID == 0:
-                        messageSent = await self.channel.send(embed=message)  # type: ignore
-                        addToDatabase(["messageId", "status"], messageSent.id)
-                        sent = True
-                    try:
-                        messageId = await self.channel.fetch_message(messageID)
-                        await messageId.edit(embed=message)  # type: ignore
-                        sent = True
-                    except:
-                        messageSent = await self.channel.send(embed=message)  # type: ignore
-                        addToDatabase(["messageId", "status"], messageSent.id)
-                        sent = True
-                await asyncio.sleep(interval)
-
-    async def initStatusEmbed(self):
-        self.ServerTask = asyncio.create_task(self.updateServerInfo())
-        # code which sends the message
-        sent: bool = False
-        while sent == False:
-            if self.channel:
-                """
-                emoji for locked/passsworded : 🔒
-                
-
-                command to generate table
-                """
-                if len(self.mainObject["serverInformation"]) <= 1:
-                    name = DATABASE_CONFIG["community_info"]["name"] or ""
-                    for server in self.mainObject["serverInformation"]:
-                        server = self.mainObject["serverInformation"][server]
-                        playerCount = f"{str(server['serverPlayerCount'])} / {str(server['serverMaxPlayer'])}"
-                        playerMap = server["map_name"]
-                        playersTable = server["serverPlayerTable"]
-
-                        message = discord.Embed(
-                            color=discord.Color.from_str("#a51e1e"),
-                            title=f"{name}'s Server - {playerCount} - {playerMap}",
-                            description=f"```{playersTable}```",
-                            timestamp=datetime.now(),
-                        )
-
-                    # Todo: once A2S built
-                messageID = DATABASE_CONFIG["messageId"]["status"]
-                if messageID == 0:
-                    messageSent = await self.channel.send(embed=message)  # type: ignore
-                    addToDatabase(["messageId", "status"], messageSent.id)
-                    sent = True
-                try:
-                    messageId = await self.channel.fetch_message(messageID)
-                    await messageId.edit(embed=message)  # type: ignore
-                    sent = True
-                except:
-                    messageSent = await self.channel.send(embed=message)  # type: ignore
-                    addToDatabase(["messageId", "status"], messageSent.id)
-                    sent = True
-        self.messageTask = asyncio.create_task(self.updateStatusMessage())
-
+            if isinstance(message,discord.Message):
+                _emebed = self.generateServerStatusEmbed()
+                await message.edit(embed=_emebed)
+            else:
+                _emebed = self.generateServerStatusEmbed()
+                message = await channel.send(embed=_emebed)
+                DATABASE.updateMessageID(message.id)
+    

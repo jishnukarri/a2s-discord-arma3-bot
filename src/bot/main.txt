@@ -1,0 +1,13 @@
+* we have a server object which updates it self
+*  functions from db to pull and push data
+
+
+logic
+
+once the discord bot starts
+
+-> checks the server list from local db
+-> creates server objects and stores them in a centeral variable
+    -> breaks off into a invidival loop where if a server is inactive; removes from main server list and places in a secondary list
+    -> moves it back to first when its back active
+-> sets up a seocond loop which pushes new embeds based on the server variable

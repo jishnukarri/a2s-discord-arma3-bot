@@ -30,9 +30,10 @@ class GuildConfig:
 
 
 class ServerConfig:
-    def __init__(self, ip, port: int) -> None:
+    def __init__(self, ip, port: int, name:str) -> None:
         self.ip = ip
         self.port = port
+        self.name = name
 
 
 def peristData(func):
@@ -55,7 +56,7 @@ class Database:
         self._saveDB(
             MessageConfig(),
             GuildConfig(),
-            [ServerConfig("example.arma.com", 2303)],
+            [],
             createWrite,
         )
         logging.warning(
@@ -172,7 +173,3 @@ _DATABASE_FILE: str = str(os.getenv("DATABASE_FILE"))
 CONFIG = Config()
 
 DATABASE = Database(_DATABASE_FILE)
-
-GUILD_CONFIG = DATABASE.guildDATA
-MESSAGE_CONFIG = DATABASE.messageDATA
-SERVERS_CONFIG = DATABASE.serversDATA
