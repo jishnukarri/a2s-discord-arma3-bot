@@ -31,14 +31,21 @@ class Server:
         return self.object.players
     @property
     def isActive(self):
-        if self.object.failedRetries > 0:
+        if self.object.failedRetries <= 10:
             return True
-        return False
+        else:
+            return False
+    @property
     def getTable(self):
-        _players =  []
-        for i in self.players:
-            _players.append(i.__dict__)
-        table = tabulate.tabulate(_players,["Name","Score","Time Played"],tablefmt="rounded_grid")
+        if self.object.lastUpdated == 0:
+            table = tabulate.tabulate([["Loading","Data","..."]],["Name","Score","Time Played"])
+        else:
+            _players =  []
+            for i in self.players[:10]:
+                _players.append(list(i))
+            table = tabulate.tabulate(_players,["Name","Score","Time Played"])
+        return table
+
 
 class Bot(discord.Client):
     def __init__(self):
@@ -53,6 +60,7 @@ class Bot(discord.Client):
         for server in DATABASE.serversDATA:
             _ser = Server(name=server.name,ip=server.ip,port=server.port)
             servers.append(_ser)
+
     async def on_ready(self):
         loaded = True
         logging.info(f"Bot is loaded as {self.user.name}({self.user.id})") # type: ignore
@@ -66,8 +74,10 @@ class Bot(discord.Client):
             if server.isActive == True:
                 embed.add_field(
                     name=server.info.name or server.name,
-                    value=f"```md server.getTable()```"
+                    value=f"```\n {server.getTable} \n```",
+                    inline=True
                 )
+
         return embed
     
     @tasks.loop(seconds=10)
@@ -79,15 +89,13 @@ class Bot(discord.Client):
                 _emebed = self.generateServerStatusEmbed()
                 message = await channel.send(embed=_emebed)
                 DATABASE.updateMessageID(message.id)
-                pass
-            
-            message = await channel.fetch_message(id)
-
-            if isinstance(message,discord.Message):
-                _emebed = self.generateServerStatusEmbed()
-                await message.edit(embed=_emebed)
-            else:
-                _emebed = self.generateServerStatusEmbed()
-                message = await channel.send(embed=_emebed)
-                DATABASE.updateMessageID(message.id)
+            else:            
+                try:
+                    message = await channel.fetch_message(id)
+                    _emebed = self.generateServerStatusEmbed()
+                    await message.edit(embed=_emebed)
+                except Exception as e:
+                    _emebed = self.generateServerStatusEmbed()
+                    message = await channel.send(embed=_emebed)
+                    DATABASE.updateMessageID(message.id)
     
