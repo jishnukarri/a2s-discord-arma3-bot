@@ -1,12 +1,12 @@
-def main():
-    # intents = discord.Intents.default()
-    # intents.message_content = True
+from src.bot.main import Bot
+import logging
 
-    # client = MyClient(intents=intents)
-    # client.run('my token goes here')
-    # code once we build the basic bot
-    pass
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[logging.StreamHandler()],
+)
 
 
-if __name__ == "__main__":
-    main()
+bot = Bot()
