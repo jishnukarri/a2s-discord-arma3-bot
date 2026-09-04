@@ -28,7 +28,10 @@ class Player:
         self.score = score 
         self.time = time
 
-
+    def __iter__(self):
+        yield self.name
+        yield self.score
+        yield self.time
 class Arma3Query:
     def __init__(self,ip:str,port:int,jsonName) -> None:
         self.ip:str = ip
