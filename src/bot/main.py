@@ -1,5 +1,5 @@
 from src.query.a2sQuery import Arma3Query
-from src.config import DATABASE, CONFIG
+from src.config import DATABASE, CONFIG, ServerConfig
 import discord
 from discord.ext import commands, tasks
 import logging
@@ -12,14 +12,16 @@ loaded = False
 
 
 class Server:
-    def __init__(self, ip, port, name) -> None:
-        self.ip = ip
-        self.port = port
-        self.name = name
+    def __init__(self, serverConfig: ServerConfig) -> None:
+        self.serverConfig = serverConfig
         self.createObject()
 
     def createObject(self):
-        self.object = Arma3Query(ip=self.ip, port=self.port, jsonName=self.name)
+        self.object = Arma3Query(
+            ip=self.serverConfig.ip,
+            port=self.serverConfig.port,
+            jsonName=self.serverConfig.name,
+        )
 
     @property
     def info(self):
@@ -62,19 +64,24 @@ class Bot(discord.Client):
         if loaded != True:
             pass
         for server in DATABASE.serversDATA:
-            _ser = Server(name=server.name, ip=server.ip, port=server.port)
-            servers.append(_ser)
+            servers.append(Server(serverConfig=server))
 
     async def on_ready(self):
         loaded = True
         logging.info(f"Bot is loaded as {self.user.name}({self.user.id})")  # type: ignore
         self.serverStatusUpdater.start()
 
+    """
+    generates a custom embed using discord.embeds.Embed
+    this is used in serverStatusUpdater to get the latest emebed 
+    """
+
     def generateServerStatusEmbed(self):
         embed = discord.embeds.Embed()
         embed.title = f"{DATABASE.guildDATA.communityName}'s Server Status"
         embed.color = discord.Color.default()
         for server in servers:
+            # uses isActive to check if a server is active L35 ref
             if server.isActive == True:
                 embed.add_field(
                     name=server.info.name or server.name,
@@ -85,6 +92,11 @@ class Bot(discord.Client):
             embed.timestamp = datetime.datetime.now()
 
         return embed
+
+    """
+    updates the message every 10s
+    creates one if not found/deleted and updates db
+    """
 
     @tasks.loop(seconds=10)
     async def serverStatusUpdater(self):

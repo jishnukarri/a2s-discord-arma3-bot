@@ -6,10 +6,8 @@ import sys
 from functools import wraps
 
 load_dotenv()
-# Discord Secrets
 
-
-""" Server Config's = Used to translate json into objects and backwards """
+""" Database Scaffolds """
 
 
 class MessageConfig:
@@ -36,6 +34,11 @@ class ServerConfig:
         self.name = name
 
 
+# Helpers
+
+""" To save db when a function changes something"""
+
+
 def peristData(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -52,6 +55,8 @@ class Database:
         self.filePath = db_file
         self._loadDB()
 
+    """ Create a empty copy of a DB"""
+
     def _loadCleanDB(self, createWrite):
         self._saveDB(
             MessageConfig(),
@@ -64,7 +69,7 @@ class Database:
         )
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
-    """ Loads the DB into memory"""
+    """ Loads the DB into memory """
 
     def _loadDB(self):
         if not os.path.exists(self.filePath):
@@ -93,6 +98,8 @@ class Database:
             logging.error("Unknown Error while loading DB.", exc_info=True)
             raise Exception("DB Error \n Check Logs")
 
+    """ Converts all the objects back into json to save to file. """
+
     def _saveDB(self, _MConfig, _GConfig, _SsConfig, fileWrite="w"):
         try:
             db = {
@@ -106,18 +113,12 @@ class Database:
             logging.error("Unable to save to database file.", exc_info=True)
             raise Exception("Unable to save to database file.\nCheck logs.")
 
+    """ uses _saveDB to update the file with the latest data from memory"""
+
     def updateDB(self):
-        try:
-            db = {
-                "community_info": self.guildDATA.__dict__,
-                "messageIDs": self.messageDATA.__dict__,
-                "servers": [server.__dict__ for server in self.serversDATA],
-            }
-            with open(self.filePath, "w") as DB:
-                json.dump(db, DB)
-        except Exception as e:
-            logging.error("Unable to save to database file.", exc_info=True)
-            raise Exception("Unable to save to database file.\nCheck logs.")
+        self._saveDB(self.guildDATA, self.messageDATA, self.serversDATA)
+
+    """ Adds a server to in-memory database"""
 
     @peristData
     def addServer(self, serverObject):
@@ -128,6 +129,8 @@ class Database:
         else:
             logging.error("Object could'nt be indentified")
             raise Exception("Object could'nt be identified")
+
+    """ Removes a server to in-memory database"""
 
     @peristData
     def removeServer(self, host: str, port: int):
@@ -140,6 +143,8 @@ class Database:
                 logging.warning(f"Server could'nt be found: {serverObject.__dict__}")
                 return False
 
+    """ Updates any changes to the guild's"""
+
     @peristData
     def updateCommunityData(self, cDATA):
         if type(cDATA) == GuildConfig:
@@ -149,6 +154,8 @@ class Database:
         else:
             logging.warning(f"Community Info is not valid: {cDATA.__dict__}")
             return False
+
+    """ Updates message ID when a new message is sent"""
 
     @peristData
     def updateMessageID(self, newMessageID):

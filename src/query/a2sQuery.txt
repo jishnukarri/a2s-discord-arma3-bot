@@ -1,5 +1,4 @@
 function loopServerUpdates:
-    start
     wait 10 seconds #starting with a timeout
     check if server response failed is above 100:
         yes:
