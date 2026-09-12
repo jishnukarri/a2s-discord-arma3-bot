@@ -22,7 +22,7 @@ I did repeat my code multiple times to get it working which in my opnion is a ba
 ## Plan
 
 This bot is built for a Arma3 Communites
-    - It shows server status (MVP)
+    - It shows server status (MVP) [DONE]
         * Inital plan is to only support arma3 servers(MVP)
         * Add support to also show other servers
     - Mod Update Reminders from steamWorkshop(MVP)

@@ -30,7 +30,7 @@ class GuildConfig:
 
 
 class ServerConfig:
-    def __init__(self, ip, port: int, name:str) -> None:
+    def __init__(self, ip, port: int, name: str) -> None:
         self.ip = ip
         self.port = port
         self.name = name

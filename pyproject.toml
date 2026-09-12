@@ -5,6 +5,7 @@ description = "A arma 3 community bot for admins to manage their servers/units"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "beautifulsoup4>=4.15.0",
     "discord-py>=2.7.1",
     "dotenv>=0.9.9",
     "humanize>=4.15.0",
