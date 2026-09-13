@@ -116,7 +116,7 @@ class Database:
     """ uses _saveDB to update the file with the latest data from memory"""
 
     def updateDB(self):
-        self._saveDB(self.guildDATA, self.messageDATA, self.serversDATA)
+        self._saveDB(self.messageDATA, self.guildDATA, self.serversDATA)
 
     """ Adds a server to in-memory database"""
 
