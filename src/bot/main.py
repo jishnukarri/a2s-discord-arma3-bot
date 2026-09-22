@@ -1,7 +1,10 @@
 from src.query.a2sQuery import Arma3Query
 from src.config import DATABASE, CONFIG, ServerConfig
 import discord
-from discord.ext import commands, tasks
+from discord import app_commands
+from discord.ext import tasks, commands
+from src.mod_update.decode_modlist_commands import ModUpdateReminder
+
 import logging
 import asyncio
 import tabulate
@@ -56,13 +59,28 @@ class Bot(discord.Client):
     def __init__(self):
         intents = discord.Intents.default()
         intents.message_content = True
-
         super().__init__(intents=intents)
+        self.tree = app_commands.CommandTree(self)  # to hold slash commands
+        # since we're not using commands.Bot i have to manually do this
+
         super().run(token=CONFIG.CLIENT_TOKEN)
 
     async def setup_hook(self):
+        # Checking if this has been done before
         if loaded != True:
             pass
+
+        _guild = discord.Object(CONFIG.GUILD_ID)
+
+        # Command COG's
+        commands_cog = ModUpdateReminder(self)
+        self.tree.add_command(commands_cog)
+
+        # Add those commands to the given server
+        self.tree.copy_global_to(guild=_guild)
+        synced = await self.tree.sync(guild=_guild)
+
+        print(f"Synced {len(synced)} commands to {CONFIG.GUILD_ID}")
         for server in DATABASE.serversDATA:
             servers.append(Server(serverConfig=server))
 
