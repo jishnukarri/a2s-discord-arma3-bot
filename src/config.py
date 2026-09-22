@@ -173,6 +173,7 @@ class Config:
         self.CLIENT_TOKEN: str = str(os.getenv("CLIENT_TOKEN", ""))
         self.GUILD_ID: int = int(os.getenv("GUILD_ID", 0))
         self.CHANNEL_ID: int = int(os.getenv("CHANNEL_ID", 0))
+        self.STEAM_API_KEY: str = str(os.getenv("STEAM_API_KEY", "NO_KEY_PROVIDED"))
 
 
 _DATABASE_FILE: str = str(os.getenv("DATABASE_FILE"))
