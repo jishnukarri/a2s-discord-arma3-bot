@@ -21,11 +21,12 @@ class GuildConfig:
         communityName: str = "",
         communityIcon: str = "",
         showUpdatedTimeStamp: bool = True,
+        serverModlists:dict = {}
     ) -> None:
         self.communityName = communityName
         self.communityIcon = communityIcon
         self.showUpdatedTimeStamp = showUpdatedTimeStamp
-
+        self.serverModlists = serverModlists
 
 class ServerConfig:
     def __init__(self, ip, port: int, name: str) -> None:
@@ -154,6 +155,59 @@ class Database:
         else:
             logging.warning(f"Community Info is not valid: {cDATA.__dict__}")
             return False
+    #todo: set a default modlist OBJECT
+
+    """ Allows to modify modlists"""
+    def addModlist(self,name:str,modlist:object):
+        if name != "" and modlist is not object:
+            logging.error(f"MOD DETAILS INVALID: {locals()} in addModlist")
+            return False
+        currentGuild = self.guildDATA
+
+        if name in currentGuild.serverModlists:
+            logging.warning("MOD DETAILS NOT EXISTING in addModlist")
+            return "EXSTING"
+
+        currentGuild.serverModlists[name] = modlist.__dict__
+
+        self.guildDATA = currentGuild
+        return True
+
+    """ Modify a exsting modlist"""
+    def modifyModlist(self,name:str,oldModlist:object,newModlist:object):
+        if name != "" and ((oldModlist is not object) and (newModlist is not object)) and oldModlist != newModlist:
+            logging.error(f"MOD DETAILS INVALID: {locals()} in modifyModlist")
+            return False
+        currentGuild = self.guildDATA
+
+        if name not in currentGuild.serverModlists:
+            logging.warning(f"MOD DETAILS NOT EXISTING: {name} in modifyModlist")
+            return "EXSTING"
+        if currentGuild.serverModlists[name] == oldModlist.__dict__:
+            currentGuild.serverModlists[name] = newModlist
+        else:
+            logging.error("MODLIST NOT UPDATED DUE OLD MODLIST NOT MATCHING DICT in modifyModlist")
+
+        self.guildDATA = currentGuild
+        return True
+
+    """ Delete a existing modlist"""
+    def deleteModlist(self,name:str,modlist:object,):
+        if name != "" and modlist is not object:
+            logging.error(f"MOD DETAILS INVALID: {locals()} in deleteModlist")
+            return False
+        currentGuild = self.guildDATA
+
+        if name not in currentGuild.serverModlists:
+            logging.warning(f"MOD DETAILS NOT EXISTING: {name} in deleteModlist")
+            return "EXSTING"
+        if currentGuild.serverModlists[name] == modlist.__dict__:
+            currentGuild.serverModlists.pop(name)
+        else:
+            logging.error("MODLIST NOT DELETED DUE MODLIST NOT MATCHING DICT in deleteModlist")
+
+        self.guildDATA = currentGuild
+        return True
 
     """ Updates message ID when a new message is sent"""
 
