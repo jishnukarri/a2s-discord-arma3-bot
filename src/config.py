@@ -159,9 +159,9 @@ class Database:
 
     """ Allows to modify modlists"""
     def addModlist(self,name:str,modlist:object):
-        if name != "" and modlist is not object:
+        if name == "" and modlist is not object:
             logging.error(f"MOD DETAILS INVALID: {locals()} in addModlist")
-            return False
+            return "INVALID"
         currentGuild = self.guildDATA
 
         if name in currentGuild.serverModlists:
@@ -171,13 +171,13 @@ class Database:
         currentGuild.serverModlists[name] = modlist.__dict__
 
         self.guildDATA = currentGuild
-        return True
+        return "SAVED"
 
     """ Modify a exsting modlist"""
     def modifyModlist(self,name:str,oldModlist:object,newModlist:object):
-        if name != "" and ((oldModlist is not object) and (newModlist is not object)) and oldModlist != newModlist:
+        if name == "" and ((oldModlist is not object) and (newModlist is not object)) and oldModlist != newModlist:
             logging.error(f"MOD DETAILS INVALID: {locals()} in modifyModlist")
-            return False
+            return "INVALID"
         currentGuild = self.guildDATA
 
         if name not in currentGuild.serverModlists:
@@ -189,13 +189,13 @@ class Database:
             logging.error("MODLIST NOT UPDATED DUE OLD MODLIST NOT MATCHING DICT in modifyModlist")
 
         self.guildDATA = currentGuild
-        return True
+        return "SAVED"
 
     """ Delete a existing modlist"""
-    def deleteModlist(self,name:str,modlist:object,):
-        if name != "" and modlist is not object:
+    def deleteModlist(self,name:str,modlist:object):
+        if name == "" and modlist is not object:
             logging.error(f"MOD DETAILS INVALID: {locals()} in deleteModlist")
-            return False
+            return "INVALID"
         currentGuild = self.guildDATA
 
         if name not in currentGuild.serverModlists:
@@ -207,7 +207,8 @@ class Database:
             logging.error("MODLIST NOT DELETED DUE MODLIST NOT MATCHING DICT in deleteModlist")
 
         self.guildDATA = currentGuild
-        return True
+        return "SAVED"
+
 
     """ Updates message ID when a new message is sent"""
 
