@@ -1,9 +1,10 @@
 from src.query.a2sQuery import Arma3Query
 from src.config import DATABASE, CONFIG, ServerConfig
+from src.mod_update import ModUpdateReminder
+
 import discord
 from discord import app_commands
 from discord.ext import tasks, commands
-from src.mod_update.decode_modlist_commands import ModUpdateReminder
 
 import logging
 import asyncio
@@ -101,8 +102,9 @@ class Bot(discord.Client):
         for server in servers:
             # uses isActive to check if a server is active L35 ref
             if server.isActive == True:
+                name = server.info.name if server.info.name else server.name
                 embed.add_field(
-                    name=server.info.name or server.name,
+                    name=server.info.name if server.info.name else server.name,
                     value=f"```\n {server.getTable} \n```",
                     inline=False,
                 )
