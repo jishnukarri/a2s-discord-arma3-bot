@@ -89,7 +89,7 @@ class Arma3Query:
             logging.info(f"Current information for {self.serverTuple} has been updated")
             self._dataUpdated()
             pass
-        except BufferExhaustedError or TimeoutError:
+        except(BufferExhaustedError,TimeoutError):
             logging.error("Server is unable to respond to query", exc_info=True)
             self.failedRetries += 1
         except BrokenMessageError:
@@ -112,7 +112,7 @@ class Arma3Query:
             logging.info(f"Current player list for {self.serverTuple} has been updated")
             self._dataUpdated()
             pass
-        except BufferExhaustedError or TimeoutError:
+        except(BufferExhaustedError,TimeoutError):
             logging.error("Server is unable to respond to query", exc_info=True)
             self.failedRetries += 1
         except BrokenMessageError:
