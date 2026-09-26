@@ -86,7 +86,6 @@ class SteamMod:
 
 @dataclass
 class SteamStoreProcessedModlist:
-    def __init__(self, modlist: list[SteamMod], channelID: int, roleID: int) -> None:
-        self.modlist = modlist
-        self.channelID = channelID
-        self.roleID = roleID
+    modlist: list[SteamMod]
+    channelID:int
+    roleID:int
