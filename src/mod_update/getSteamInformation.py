@@ -15,7 +15,7 @@ def getWorkshopInformation(payload: dict) -> list[SteamMod] | None:
     if workshopResponse.ok:
         workshopResponse = workshopResponse.json()
     else:
-        logging.warning("[STEAM-WORKSHOP] Workshop response failed")
+        logging.warning(f"[STEAM-WORKSHOP] Workshop response failed - payload :- {payload} response:- {workshopResponse.__dict__}")
         return None
 
     for modResponse in workshopResponse["response"]["publishedfiledetails"]:
