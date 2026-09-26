@@ -4,37 +4,9 @@ import os
 import logging
 import sys
 from functools import wraps
+from src.data_models import (SteamMod, SteamStoreProcessedModlist,MessageConfig,GuildConfig,ServerConfig)
 
 load_dotenv()
-
-""" Database Scaffolds """
-
-
-class MessageConfig:
-    def __init__(self, statusMessageID: int = 0) -> None:
-        self.statusMessageID: int = statusMessageID
-
-
-class GuildConfig:
-    def __init__(
-        self,
-        communityName: str = "",
-        communityIcon: str = "",
-        showUpdatedTimeStamp: bool = True,
-        serverModlists:dict = {}
-    ) -> None:
-        self.communityName = communityName
-        self.communityIcon = communityIcon
-        self.showUpdatedTimeStamp = showUpdatedTimeStamp
-        self.serverModlists = serverModlists
-
-class ServerConfig:
-    def __init__(self, ip, port: int, name: str) -> None:
-        self.ip = ip
-        self.port = port
-        self.name = name
-
-
 # Helpers
 
 """ To save db when a function changes something"""
@@ -44,11 +16,37 @@ def peristData(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         result = func(self, *args, **kwargs)
-        if result is True:
+        if result is True or result == "SAVED":
             self.updateDB()
         return result
 
     return wrapper
+
+# this was from ai; pretty much to solve this db problem
+def dict_to_object(data, cls):
+    """
+    Recursively turns a dictionary back into a class instance.
+    """
+    if isinstance(data, dict):
+        # Create an empty instance of the target class without calling __init__ blocking checks
+        obj = cls.__new__(cls)
+        
+        for key, value in data.items():
+            # Get the expected type/class of the attribute if it's a sub-class
+            # This looks at your class type hints if you use them, or you can check manually
+            attr_type = getattr(cls, '__annotations__', {}).get(key, None)
+            
+            if isinstance(value, dict) and attr_type and hasattr(attr_type, '__dict__'):
+                # Recursively build the nested inner class
+                setattr(obj, key, dict_to_object(value, attr_type))
+            elif isinstance(value, list) and attr_type and hasattr(attr_type, '__args__'):
+                # Handle lists of custom objects if type hinted
+                sub_cls = attr_type.__args__[0]
+                setattr(obj, key, [dict_to_object(item, sub_cls) for item in value])
+            else:
+                setattr(obj, key, value)
+        return obj
+    return data
 
 
 class Database:
@@ -86,7 +84,24 @@ class Database:
                 _messageDATA = _db["messageIDs"]
                 _serverData = _db["servers"]
 
-                self.guildDATA = GuildConfig(**_guildData)
+                self.guildDATA = dict_to_object(_guildData, GuildConfig)
+                loadedModlists = {}
+                for name, rawModlist in self.guildDATA.serverModlists.items():
+                    if isinstance(rawModlist, str):
+                        rawModlist = json.loads(rawModlist)
+
+                    if isinstance(rawModlist, dict):
+                        rawModlist["modlist"] = [
+                            dict_to_object(mod, SteamMod)
+                            for mod in rawModlist.get("modlist", [])
+                        ]
+                        loadedModlists[name] = dict_to_object(
+                            rawModlist, SteamStoreProcessedModlist
+                        )
+                    else:
+                        loadedModlists[name] = rawModlist
+
+                self.guildDATA.serverModlists = loadedModlists
                 self.messageDATA = MessageConfig(**_messageDATA)
                 serversDATA = []
                 for server in _serverData:
@@ -109,7 +124,7 @@ class Database:
                 "servers": [server.__dict__ for server in _SsConfig],
             }
             with open(self.filePath, fileWrite) as DB:
-                json.dump(db, DB)
+                json.dump(db, DB, default=lambda obj: obj.__dict__)
         except Exception as e:
             logging.error("Unable to save to database file.", exc_info=True)
             raise Exception("Unable to save to database file.\nCheck logs.")
@@ -155,11 +170,18 @@ class Database:
         else:
             logging.warning(f"Community Info is not valid: {cDATA.__dict__}")
             return False
-    #todo: set a default modlist OBJECT
 
+    """Verify Modlist data being recived"""
+    def checkModlistParms(self,name,values) -> bool:
+        if name != "" and type(values) == SteamStoreProcessedModlist:
+            return True
+        else:
+            return False
+    
     """ Allows to modify modlists"""
-    def addModlist(self,name:str,modlist:object):
-        if name == "" and modlist is not object:
+    @peristData
+    def addModlist(self,name:str,values:SteamStoreProcessedModlist):
+        if not self.checkModlistParms(name,values):
             logging.error(f"MOD DETAILS INVALID: {locals()} in addModlist")
             return "INVALID"
         currentGuild = self.guildDATA
@@ -168,23 +190,24 @@ class Database:
             logging.warning("MOD DETAILS NOT EXISTING in addModlist")
             return "EXSTING"
 
-        currentGuild.serverModlists[name] = modlist.__dict__
-
+        currentGuild.serverModlists[name] = values
         self.guildDATA = currentGuild
         return "SAVED"
 
     """ Modify a exsting modlist"""
-    def modifyModlist(self,name:str,oldModlist:object,newModlist:object):
-        if name == "" and ((oldModlist is not object) and (newModlist is not object)) and oldModlist != newModlist:
+    @peristData
+    def modifyModlist(self,oldName:str,newName:str,oldValues:SteamStoreProcessedModlist,newValues:SteamStoreProcessedModlist):
+        if not self.checkModlistParms(oldName,oldValues) and not self.checkModlistParms(newName,newValues) and oldValues != newValues:
             logging.error(f"MOD DETAILS INVALID: {locals()} in modifyModlist")
             return "INVALID"
         currentGuild = self.guildDATA
 
-        if name not in currentGuild.serverModlists:
-            logging.warning(f"MOD DETAILS NOT EXISTING: {name} in modifyModlist")
+        if oldName not in currentGuild.serverModlists:
+            logging.warning(f"MOD DETAILS NOT EXISTING: {oldName} in modifyModlist")
             return "EXSTING"
-        if currentGuild.serverModlists[name] == oldModlist.__dict__:
-            currentGuild.serverModlists[name] = newModlist
+        if currentGuild.serverModlists[oldName] == oldValues:
+            currentGuild.serverModlists.pop(oldName)
+            currentGuild.serverModlists[newName] = newValues
         else:
             logging.error("MODLIST NOT UPDATED DUE OLD MODLIST NOT MATCHING DICT in modifyModlist")
 
@@ -192,8 +215,9 @@ class Database:
         return "SAVED"
 
     """ Delete a existing modlist"""
-    def deleteModlist(self,name:str,modlist:object):
-        if name == "" and modlist is not object:
+    @peristData
+    def deleteModlist(self,name:str,values:SteamStoreProcessedModlist):
+        if not self.checkModlistParms(name,values):
             logging.error(f"MOD DETAILS INVALID: {locals()} in deleteModlist")
             return "INVALID"
         currentGuild = self.guildDATA
@@ -201,14 +225,13 @@ class Database:
         if name not in currentGuild.serverModlists:
             logging.warning(f"MOD DETAILS NOT EXISTING: {name} in deleteModlist")
             return "EXSTING"
-        if currentGuild.serverModlists[name] == modlist.__dict__:
+        if currentGuild.serverModlists[name] == values:
             currentGuild.serverModlists.pop(name)
         else:
             logging.error("MODLIST NOT DELETED DUE MODLIST NOT MATCHING DICT in deleteModlist")
 
         self.guildDATA = currentGuild
         return "SAVED"
-
 
     """ Updates message ID when a new message is sent"""
 
