@@ -50,7 +50,7 @@ class RenameModlistModal(discord.ui.Modal, title="Rename Modlist"):
             await interaction.response.send_message(f"Modlist is still **{self.currentName}**.", ephemeral=True)
 
 class AddModlistPrompt(discord.ui.View):
-    def __init__(self,currentName,values):
+    def __init__(self,currentName:str,values:SteamStoreProcessedModlist):
         super().__init__(timeout=180)
         self.currentName = currentName
         self.values = values 
@@ -76,15 +76,41 @@ class AddModlistPrompt(discord.ui.View):
 
     async def channelCallback(self,interaction:discord.Interaction):
         selectedChannel = self.channelSelect.values[0]
-        value = self.values
-        value.channelID = selectedChannel.id
-        DATABASE.modifyModlist(self.currentName,self.currentName,self.values,value)
+        old_value = self.values
+
+        new_value = SteamStoreProcessedModlist(
+            modlist=old_value.modlist,
+            channelID=selectedChannel.id,
+            roleID=old_value.roleID,
+        )
+
+        DATABASE.modifyModlist(
+            self.currentName,
+            self.currentName,
+            old_value,
+            new_value,
+        )
+
+        self.values = new_value
         await interaction.response.send_message(f"Channel set to {selectedChannel.mention}", ephemeral=True)
     async def roleCallback(self,interaction:discord.Interaction):
         selectedRoleID = self.roleSelect.values[0]
-        value = self.values
-        value.roleID = selectedRoleID.id
-        DATABASE.modifyModlist(self.currentName,self.currentName,self.values,value)
+        old_value = self.values
+
+        new_value = SteamStoreProcessedModlist(
+            modlist=old_value.modlist,
+            channelID=old_value.channelID,
+            roleID=selectedRoleID.id,
+        )
+
+        DATABASE.modifyModlist(
+            self.currentName,
+            self.currentName,
+            old_value,
+            new_value,
+        )
+
+        self.values = new_value
         await interaction.response.send_message(f"Channel set to {selectedRoleID.mention}", ephemeral=True)
     async def rename_callback(self, interaction: discord.Interaction):
         await interaction.response.send_modal(RenameModlistModal(self.currentName, self.values))
