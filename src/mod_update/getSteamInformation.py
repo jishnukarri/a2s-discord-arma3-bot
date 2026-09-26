@@ -56,7 +56,7 @@ def getModlistInformation(modIDs) -> list[SteamMod] | None:
 """ Modlist Information for Reminder loops"""
 def getModlistInformationLoop(modlist:list[SteamMod]) -> list[SteamMod] | None:
     payload: dict[str, int | str] = {
-        "itemcount": len(modlist) - 1,
+        "itemcount": len(modlist),
     }
 
     if hasSteamKey != False:
