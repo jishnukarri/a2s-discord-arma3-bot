@@ -36,10 +36,10 @@ def getWorkshopInformation(payload: dict) -> list[SteamMod] | None:
 """ Modlist Information when a new Modlist is added """
 def getModlistInformation(modIDs) -> list[SteamMod] | None:
     payload: dict[str, int | str] = {
-        "itemcount": len(modIDs) - 1,
+        "itemcount": len(modIDs),
     }
 
-    if hasSteamKey != False:
+    if hasSteamKey:
         logging.info(f"[STEAM-WORKSHOP] Steam key available.")
         payload["key"] = str(hasSteamKey)
 
@@ -59,7 +59,7 @@ def getModlistInformationLoop(modlist:list[SteamMod]) -> list[SteamMod] | None:
         "itemcount": len(modlist),
     }
 
-    if hasSteamKey != False:
+    if hasSteamKey:
         logging.info(f"[STEAM-WORKSHOP] Steam key available.")
         payload["key"] = str(hasSteamKey)
 
