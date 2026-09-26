@@ -1,18 +1,7 @@
+from src.mod_update import hasSteamKey
+from src.data_models import SteamMod
 import requests
-from src.config import CONFIG
 import logging
-
-
-hasSteamKey = True if CONFIG.STEAM_API_KEY != "NO_KEY_PROVIDED" else False
-
-
-class SteamMod:
-    def __init__(self, workshopID, icon, name, lastUpdated, size) -> None:
-        self.id: int = workshopID
-        self.icon: str = icon
-        self.name: str = name
-        self.lastUpdated: str = lastUpdated
-        self.fileSize: int = size
 
 
 def getWorkshopInformation(payload: dict) -> list[SteamMod] | None:
@@ -30,7 +19,9 @@ def getWorkshopInformation(payload: dict) -> list[SteamMod] | None:
         return None
 
     for modResponse in workshopResponse["response"]["publishedfiledetails"]:
-        print(modResponse)
+        logging.info(f"[STEAM-WORKSHOP] Processing {modResponse.get("title")}")
+        if modResponse.get("title") == None:
+            continue
         _mod = SteamMod(
             modResponse.get("publishedfileid"),
             modResponse.get("preview_url"),
@@ -39,22 +30,45 @@ def getWorkshopInformation(payload: dict) -> list[SteamMod] | None:
             modResponse.get("file_size"),
         )
         steamMods.append(_mod)
-
+    logging.info(f"[STEAM-WORKSHOP] Processed all mods.")
     return steamMods
 
-
-def getModlistInformation(modIDs) -> list[SteamMod] | bool:
+""" Modlist Information when a new Modlist is added """
+def getModlistInformation(modIDs) -> list[SteamMod] | None:
     payload: dict[str, int | str] = {
         "itemcount": len(modIDs) - 1,
     }
 
-    if hasSteamKey:
-        payload["key"] = str(CONFIG.STEAM_API_KEY)
+    if hasSteamKey != False:
+        logging.info(f"[STEAM-WORKSHOP] Steam key available.")
+        payload["key"] = str(hasSteamKey)
 
     for id, Mod in enumerate(modIDs):
         payload[f"publishedfileids[{id}]"] = Mod.workshopID
     response = getWorkshopInformation(payload)
     if response != None:
+        logging.info(f"[STEAM-WORKSHOP] Modlist information request sucessful.")
         return response
     else:
-        return False
+        logging.warning("[STEAM-WORKSHOP] Modlist information request failed.")
+        return
+
+""" Modlist Information for Reminder loops"""
+def getModlistInformationLoop(modlist:list[SteamMod]) -> list[SteamMod] | None:
+    payload: dict[str, int | str] = {
+        "itemcount": len(modlist) - 1,
+    }
+
+    if hasSteamKey != False:
+        logging.info(f"[STEAM-WORKSHOP] Steam key available.")
+        payload["key"] = str(hasSteamKey)
+
+    for id, Mod in enumerate(modlist):
+        payload[f"publishedfileids[{id}]"] = Mod.id
+    response = getWorkshopInformation(payload)
+    if response != None:
+        logging.info(f"[STEAM-WORKSHOP] Modlist information request sucessful.")
+        return response
+    else:
+        logging.warning("[STEAM-WORKSHOP] Modlist information request failed.")
+        return None

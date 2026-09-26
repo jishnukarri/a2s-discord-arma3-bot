@@ -1,4 +1,4 @@
-from src.bot.main import Bot
+from src.bot import Bot
 import logging
 
 logging.basicConfig(
