@@ -26,7 +26,6 @@ async def sendModUpdateReminder(name:str,values:SteamStoreProcessedModlist,updat
 #todo: fix the fucking updated modkeys
 async def modReminderLoop(name:str,values:SteamStoreProcessedModlist,client:discord.Client):
     while True:
-        await asyncio.sleep(MOD_REMINDER_CHECK_TIMEOUT)
         logging.info(f"[MODLIST-LOOP] starting loop for {name}")
         logging.info("[MODLIST-LOOP] requesting data for all ")
         oldModlist = values.modlist
@@ -58,3 +57,4 @@ async def modReminderLoop(name:str,values:SteamStoreProcessedModlist,client:disc
                 DATABASE.modifyModlist(name,name,exstingData,dbPayload)
         else:
             logging.info("[MODLIST-LOOP] steam failed to respond to query")
+        await asyncio.sleep(MOD_REMINDER_CHECK_TIMEOUT)
