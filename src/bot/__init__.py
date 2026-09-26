@@ -1,6 +1,6 @@
 from src.query.a2sQuery import Arma3Query
 from src.config import DATABASE, CONFIG
-from src.data_models import ServerConfig
+from src.data_models import ServerConfig, SteamStoreProcessedModlist
 from src.mod_update import ModUpdateReminder
 
 import discord

@@ -19,6 +19,7 @@ Today, i worked on fixing my async functions to update information; It was a lot
 New Issue:
 I was hoping to just create a dict serverInformation for the discord bot and at init i linked it to the queryObject and the goal of it was to self update but this wasnt happening so i tried creating a async function; it still doesnt run due to a discord HTTP error 
 I did repeat my code multiple times to get it working which in my opnion is a bad idea but i will redo functions which i repeated myself in at the end when its working
+
 ## Plan
 
 This bot is built for a Arma3 Communites
@@ -28,12 +29,10 @@ This bot is built for a Arma3 Communites
     - Mod Update Reminders from steamWorkshop(MVP)
         * Scrape using beautifulSoup or just use requests + regex
         * Setup a asyncio task to check regularly for updates
-    - Give Link to modlist(MVP)
-        * Send new users on request the modlist
     - Mod update reminders and modlist to new users will work one on one as both need a arma3 html modlist(MVP)
-    - Plan events maybe? currently against it as tools like Apollo exist but a idea if everything else goes smoothly
 
 
 
-### Discord Side of things
-- 
+NOTES:
+
+Workshop ID if set to 0 is just not found or like wrong link in src/mod_update/decode_modlist_commands.py

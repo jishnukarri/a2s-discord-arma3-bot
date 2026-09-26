@@ -1,14 +1,30 @@
 import asyncio
 import logging
-
+import discord 
 from src.config import DATABASE
 from src.mod_update.getSteamInformation import getModlistInformationLoop
 from src.mod_update import SteamMod, SteamStoreProcessedModlist
-
 MOD_REMINDER_CHECK_TIMEOUT = 100
 
+
+async def sendModUpdateReminder(name:str,values:SteamStoreProcessedModlist,updatedModIDs:list[int],bot:discord.Client):
+    """
+    @Mention the Role : The following mods have been updated in the modlist - {name of modlist}:
+    1.Mod Name and link to steam workshop page
+    """
+
+    message = f"<@&{values.roleID}> The following mods have been updated in the {name}: \n"
+    mods = {m.id: m for m in values.modlist}
+    for id,modID in enumerate(updatedModIDs):
+        _message = f"{id}.[{mods[modID].name}](https://steamcommunity.com/sharedfiles/filedetails/?id={mods[modID].id}) \n"
+        message = message + _message
+
+    channel = bot.get_channel(values.channelID)
+    if isinstance(channel, discord.TextChannel):
+        message = await channel.send(message)
+       
 #todo: fix the fucking updated modkeys
-async def modReminderLoop(name:str,values:SteamStoreProcessedModlist):
+async def modReminderLoop(name:str,values:SteamStoreProcessedModlist,client:discord.Client):
     while True:
         await asyncio.sleep(MOD_REMINDER_CHECK_TIMEOUT)
         logging.info(f"[MODLIST-LOOP] starting loop for {name}")
@@ -29,7 +45,7 @@ async def modReminderLoop(name:str,values:SteamStoreProcessedModlist):
                 if oldModlistDict[id].lastUpdated < updatedModlistDict[id].lastUpdated:
                     _updated_mod_keys.append(id)
             logging.info(f"[MODLIST-LOOP] loop completed sucessfully for {name}")
-            payload = [True,{"newModlist":updatedModlist,"updatedModCount":len(_updated_mod_keys)-1,"updatedModIDs":_updated_mod_keys}]
+
             exstingData = DATABASE.guildDATA.serverModlists.get(name)
             if exstingData:
                 dbPayload = SteamStoreProcessedModlist(
@@ -37,8 +53,8 @@ async def modReminderLoop(name:str,values:SteamStoreProcessedModlist):
                     channelID=exstingData.channelID,
                     roleID=exstingData.roleID
                 )
+                if len(_updated_mod_keys) > 0:
+                    await sendModUpdateReminder(name,dbPayload,_updated_mod_keys,client)
                 DATABASE.modifyModlist(name,name,exstingData,dbPayload)
-            return payload
         else:
             logging.info("[MODLIST-LOOP] steam failed to respond to query")
-            return [None]

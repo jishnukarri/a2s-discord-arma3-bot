@@ -106,7 +106,7 @@ class ModUpdateReminder(app_commands.Group):
         # start modlist loop for exsting mods
         if DATABASE.guildDATA.serverModlists:
             for name, values in DATABASE.guildDATA.serverModlists.items():
-                modlist_loop_tasks.append(asyncio.create_task(modReminderLoop(name,values)))
+                modlist_loop_tasks.append(asyncio.create_task(modReminderLoop(name,values,self.client)))
 
     @app_commands.command(name="add_modlist", description="add your arma 3 modlist")
     @app_commands.describe(user_file="Drag and drop or select your file here")
@@ -127,7 +127,7 @@ class ModUpdateReminder(app_commands.Group):
 
             DATABASE.addModlist(modlist.name,payload)
             logging.info(f"[MODLIST-COG] Modlist {modlist.name} has been added")
-            modlist_loop_tasks.append(asyncio.create_task(modReminderLoop(modlist.name, payload)))
+            modlist_loop_tasks.append(asyncio.create_task(modReminderLoop(modlist.name, payload,self.client)))
             view = AddModlistPrompt(modlist.name,payload)
             await interaction.followup.send(
                 f"Modlist has been added to the modReminder task. Please select the channel to send notifcations and the role to ping for updates.",
