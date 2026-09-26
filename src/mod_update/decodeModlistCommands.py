@@ -30,6 +30,6 @@ def decode_modlist(file: str) -> ProcessedModlist:
                 getWorkshopID = 0
             mods.append(Mod(mod[0], mod[1], getWorkshopID))
 
-    modlist = ProcessedModlist(name, mods)
+    modlist = ProcessedModlist(name, mods,len(mods))
 
     return modlist

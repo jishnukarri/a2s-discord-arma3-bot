@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from dataclasses import dataclass
 
 
 """ Database Scaffolds """
@@ -55,33 +56,27 @@ class Player:
         yield self.score
         yield self.time
 
-from dataclasses import dataclass
-
-
 @dataclass
 class Mod:
-    def __init__(self, name: str, link: str, workshopID: int) -> None:
-        self.name = name
-        self.link = link
-        self.workshopID = workshopID
+    name: str
+    link: str
+    workshopID: int
 
 
 @dataclass
 class ProcessedModlist:
-    def __init__(self, name: str, modlist: list[Mod]) -> None:
-        self.name = name
-        self.modlist = modlist
-        self.modlist_size = len(self.modlist)
+    name:str
+    modlist: list[Mod]
+    modlist_size:int
 
 
 @dataclass
 class SteamMod:
-    def __init__(self, workshopID, icon, name, lastUpdated, size) -> None:
-        self.id: int = workshopID
-        self.icon: str = icon
-        self.name: str = name
-        self.lastUpdated: str = lastUpdated
-        self.fileSize: int = size
+    id: int
+    icon: str
+    name: str
+    lastUpdated: str
+    fileSize: int
 
 
 @dataclass
