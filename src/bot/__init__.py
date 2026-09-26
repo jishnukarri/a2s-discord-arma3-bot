@@ -1,5 +1,6 @@
 from src.query.a2sQuery import Arma3Query
-from src.config import DATABASE, CONFIG, ServerConfig
+from src.config import DATABASE, CONFIG
+from src.data_models import ServerConfig
 from src.mod_update import ModUpdateReminder
 
 import discord
@@ -81,7 +82,7 @@ class Bot(discord.Client):
         self.tree.copy_global_to(guild=_guild)
         synced = await self.tree.sync(guild=_guild)
 
-        print(f"Synced {len(synced)} commands to {CONFIG.GUILD_ID}")
+        logging.info(f"Synced {len(synced)} commands to {CONFIG.GUILD_ID}")
         for server in DATABASE.serversDATA:
             servers.append(Server(serverConfig=server))
 
