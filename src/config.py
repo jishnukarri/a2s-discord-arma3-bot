@@ -197,9 +197,14 @@ class Database:
     """ Modify a exsting modlist"""
     @peristData
     def modifyModlist(self,oldName:str,newName:str,oldValues:SteamStoreProcessedModlist,newValues:SteamStoreProcessedModlist):
-        if not self.checkModlistParms(oldName,oldValues) and not self.checkModlistParms(newName,newValues) and oldValues != newValues:
-            logging.error(f"MOD DETAILS INVALID: {locals()} in modifyModlist")
+        if not self.checkModlistParms(oldName, oldValues):
+            logging.error("Invalid old modlist data")
             return "INVALID"
+
+        if not self.checkModlistParms(newName, newValues):
+            logging.error("Invalid new modlist data")
+            return "INVALID"
+
         currentGuild = self.guildDATA
 
         if oldName not in currentGuild.serverModlists:
@@ -209,6 +214,11 @@ class Database:
             currentGuild.serverModlists.pop(oldName)
             currentGuild.serverModlists[newName] = newValues
         else:
+            if currentGuild.serverModlists[oldName] != oldValues:
+                logging.error(
+                    "MODLIST NOT UPDATED: old values do not match stored values"
+                )
+                return "NOT_MATCHING"
             logging.error("MODLIST NOT UPDATED DUE OLD MODLIST NOT MATCHING DICT in modifyModlist")
 
         self.guildDATA = currentGuild
