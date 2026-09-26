@@ -43,7 +43,7 @@ class RenameModlistModal(discord.ui.Modal, title="Rename Modlist"):
         self.newName.default = self.currentName
 
     async def on_submit(self, interaction: discord.Interaction):
-        if self.newName != "":
+        if self.newName != "" or self.newName != self.currentName:
             DATABASE.modifyModlist(self.currentName,self.newName.value,self.values,self.values)
             await interaction.response.send_message(f"Modlist renamed from **{self.currentName}** to **{self.newName.value}**!", ephemeral=True)
         else:
