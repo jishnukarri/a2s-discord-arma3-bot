@@ -18,7 +18,8 @@ Requirements: UV(python package manager), Python 3.14
 
 # Example Screenshort
 
-![Screenshort](/screenshort1.png)
+![Screenshort  - Server Status](/screenshort1.png)
+![Screenshort  - Mod Update Reminder Message](/screenshort2.webp)
 
 # Tested Games
 Arma 3 **ONLY**
