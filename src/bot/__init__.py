@@ -127,13 +127,16 @@ class Bot(discord.Client):
             if id == 0:
                 _emebed = self.generateServerStatusEmbed()
                 message = await channel.send(embed=_emebed)
+                logging.info(f"NEW MESSAGE SENT {message.id}")
                 DATABASE.updateMessageID(message.id)
             else:
                 try:
                     message = await channel.fetch_message(id)
                     _emebed = self.generateServerStatusEmbed()
+                    logging.info(f"OLD MESSAGE SENT")
                     await message.edit(embed=_emebed)
                 except Exception as e:
                     _emebed = self.generateServerStatusEmbed()
                     message = await channel.send(embed=_emebed)
+                    logging.info(f"NEW MESSAGE SENT {message.id}")
                     DATABASE.updateMessageID(message.id)
