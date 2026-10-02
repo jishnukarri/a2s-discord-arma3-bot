@@ -238,7 +238,7 @@ class Database:
         if currentGuild.serverModlists[name] == values:
             currentGuild.serverModlists.pop(name)
         else:
-            logging.error("MODLIST NOT DELETED DUE MODLIST NOT MATCHING DICT in deleteModlist")
+            logging.error("modlist not deleted due modlist not matching object in deleteModlist")
 
         self.guildDATA = currentGuild
         return "SAVED"
