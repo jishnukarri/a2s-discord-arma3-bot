@@ -126,9 +126,9 @@ class ModUpdateReminder(app_commands.Group):
         super().__init__(
             name="modlist_commands",
             description="Commands used to manage modlist reminders - mod updates",
+            default_permissions = discord.Permissions(manage_guild=True)
         )
         self.client = client
-
         # start modlist loop for exsting mods
         if DATABASE.guildDATA.serverModlists:
             for name, values in DATABASE.guildDATA.serverModlists.items():
