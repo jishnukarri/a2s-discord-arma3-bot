@@ -104,9 +104,9 @@ class Bot(discord.Client):
         for server in servers:
             # uses isActive to check if a server is active L35 ref
             if server.isActive == True:
-                name = server.info.name if server.info.name else server.name
+                name = server.serverConfig.name if server.serverConfig.name else server.name
                 embed.add_field(
-                    name=server.info.name if server.info.name else server.name,
+                    name=name,
                     value=f"```\n {server.getTable} \n```",
                     inline=False,
                 )
@@ -125,9 +125,11 @@ class Bot(discord.Client):
         channel = self.get_channel(CONFIG.CHANNEL_ID)
         if isinstance(channel, discord.TextChannel):
             id = DATABASE.messageDATA.statusMessageID
-            _emebed = self.generateServerStatusEmbed()
-            await self.sendStatusMessage(id,channel,_emebed)
-            
+            try:
+                _emebed = self.generateServerStatusEmbed()
+                await self.sendStatusMessage(id,channel,_emebed)
+            except Exception as e:
+                logging.exception(f"Message unable to send due to {e} at {e.__class__}")
     async def sendStatusMessage(self,id,channel:discord.TextChannel,embed):
         try:
             message = await channel.fetch_message(id)
