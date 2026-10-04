@@ -1,38 +1,12 @@
 import a2s
 from a2s.exceptions import BrokenMessageError, BufferExhaustedError
-import src.query.arma3query_e as arma3query_e
+lazy import src.query.arma3query_e as arma3query_e
+from src.data_models import ArmaInfo,Player
+
 from datetime import datetime
 from humanize import naturaldelta
 import asyncio
 import logging
-
-
-class ArmaInfo:
-    def __init__(
-        self,
-        name: str,
-        players: int,
-        maxPlayers: int,
-        passwordProtected: bool,
-        mapName: str,
-    ) -> None:
-        self.name = name
-        self.players = players
-        self.maxPlayers = maxPlayers
-        self.passwordProtected = passwordProtected
-        self.mapName = mapName
-
-
-class Player:
-    def __init__(self, name: str, score: int, time: str) -> None:
-        self.name = name
-        self.score = score
-        self.time = time
-
-    def __iter__(self):
-        yield self.name
-        yield self.score
-        yield self.time
 
 
 class Arma3Query:
