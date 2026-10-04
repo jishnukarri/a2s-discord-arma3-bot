@@ -143,7 +143,7 @@ class ModUpdateReminder(app_commands.Group):
 
         file_data = await user_file.read()
         modlist = decodeModlistCommands.decode_modlist(file_data.decode("utf-8"))
-        steamMods = getSteamInformation.getModlistInformation(modlist.modlist)
+        steamMods = await asyncio.to_thread(getSteamInformation.getModlistInformation,modlist.modlist)
         if steamMods is not None:
             payload = SteamStoreProcessedModlist(
                 modlist=steamMods,

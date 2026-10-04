@@ -10,6 +10,7 @@ def getWorkshopInformation(payload: dict) -> list[SteamMod] | None:
     workshopResponse = requests.post(
         "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/",
         data=payload,
+        timeout=30
     )
 
     if workshopResponse.ok:

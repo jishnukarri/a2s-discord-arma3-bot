@@ -40,7 +40,7 @@ async def modReminderLoop(name:str,values:SteamStoreProcessedModlist,client:disc
         # Copy the previous state before querying; the fetched list becomes
         # the baseline for the next iteration.
         oldModlist = list(values.modlist)
-        updatedModlist = getModlistInformationLoop(oldModlist)
+        updatedModlist = await asyncio.to_thread(getModlistInformationLoop,oldModlist)
         logging.info("[MODLIST-LOOP] checking for updated mods")
         if updatedModlist is not None:
             oldModlistDict = {m.id: m for m in oldModlist}
