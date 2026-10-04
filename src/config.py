@@ -123,8 +123,10 @@ class Database:
                 "messageIDs": _MConfig.__dict__,
                 "servers": [server.__dict__ for server in _SsConfig],
             }
-            with open(self.filePath, fileWrite) as DB:
+            fileName = self.filePath + '.tmp'
+            with open(fileName, fileWrite) as DB:
                 json.dump(db, DB, default=lambda obj: obj.__dict__)
+            os.replace(fileName,self.filePath)
         except Exception as e:
             logging.error("Unable to save to database file.", exc_info=True)
             raise Exception("Unable to save to database file.\nCheck logs.")
