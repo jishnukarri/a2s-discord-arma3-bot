@@ -43,7 +43,7 @@ class RenameModlistModal(discord.ui.Modal, title="Rename Modlist"):
         self.newName.default = self.currentName
 
     async def on_submit(self, interaction: discord.Interaction):
-        if self.newName != "" or self.newName != self.currentName:
+        if self.newName.value != "" or self.newName.value != self.currentName:
             DATABASE.modifyModlist(self.currentName,self.newName.value,self.values,self.values)
             await interaction.response.send_message(f"Modlist renamed from **{self.currentName}** to **{self.newName.value}**!", ephemeral=True)
         else:
@@ -151,15 +151,32 @@ class ModUpdateReminder(app_commands.Group):
                 roleID=0
             )
 
-            DATABASE.addModlist(modlist.name,payload)
-            logging.info(f"[MODLIST-COG] Modlist {modlist.name} has been added")
-            modlist_loop_tasks.append(asyncio.create_task(modReminderLoop(modlist.name, payload,self.client)))
-            view = AddModlistPrompt(modlist.name,payload)
-            await interaction.followup.send(
-                f"Modlist has been added to the modReminder task. Please select the channel to send notifcations and the role to ping for updates.",
-                view=view,
-                ephemeral=True
-            )
+            if DATABASE.addModlist(modlist.name,payload) == "SAVED":
+                logging.info(f"[MODLIST-COG] Modlist {modlist.name} has been added")
+                modlist_loop_tasks.append(asyncio.create_task(modReminderLoop(modlist.name, payload,self.client)))
+                view = AddModlistPrompt(modlist.name,payload)
+                await interaction.followup.send(
+                    f"Modlist has been added to the modReminder task. Please select the channel to send notifcations and the role to ping for updates.",
+                    view=view,
+                    ephemeral=True
+                )
+            elif DATABASE.addModlist(modlist.name,payload) == "EXSTING":
+                logging.info(f"[MODLIST-COG] Modlist {modlist.name} already exists updating the existing modlist")
+                oldModlist = DATABASE.guildDATA.serverModlists.get(modlist.name)
+                if oldModlist:
+                    DATABASE.modifyModlist(modlist.name,modlist.name,oldModlist,payload)
+                    modlist_loop_tasks.append(asyncio.create_task(modReminderLoop(modlist.name, payload,self.client)))
+                    view = AddModlistPrompt(modlist.name,payload)
+                    await interaction.followup.send(
+                        f"Modlist has been updated to the modReminder task. Please select the channel to send notifcations and the role to ping for updates.",
+                        view=view,
+                        ephemeral=True
+                    )
+            else:
+                await interaction.followup.send(
+                            f"Invalid Modlist Uploaded",
+                            ephemeral=True
+                        )                        
         else:
             await interaction.followup.send(
                 f"Please try later.\n Unable to process information due to steam API not responding.",
