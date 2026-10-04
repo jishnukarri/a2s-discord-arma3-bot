@@ -6,6 +6,7 @@ from src.mod_update import ModUpdateReminder
 import discord
 from discord import app_commands
 from discord.ext import tasks, commands
+from aiohttp import ClientError as aiohttp_ClientError
 
 import logging
 import asyncio
@@ -124,19 +125,19 @@ class Bot(discord.Client):
         channel = self.get_channel(CONFIG.CHANNEL_ID)
         if isinstance(channel, discord.TextChannel):
             id = DATABASE.messageDATA.statusMessageID
-            if id == 0:
-                _emebed = self.generateServerStatusEmbed()
-                message = await channel.send(embed=_emebed)
-                logging.info(f"NEW MESSAGE SENT {message.id} due to {id} (id==0)")
-                DATABASE.updateMessageID(message.id)
-            else:
-                try:
-                    message = await channel.fetch_message(id)
-                    _emebed = self.generateServerStatusEmbed()
-                    logging.info(f"OLD MESSAGE SENT")
-                    await message.edit(embed=_emebed)
-                except Exception as e:
-                    _emebed = self.generateServerStatusEmbed()
-                    message = await channel.send(embed=_emebed)
-                    logging.info(f"NEW MESSAGE SENT {message.id} due to {e}")
-                    DATABASE.updateMessageID(message.id)
+            _emebed = self.generateServerStatusEmbed()
+            await self.sendStatusMessage(id,channel,_emebed)
+            
+    async def sendStatusMessage(self,id,channel:discord.TextChannel,embed):
+        try:
+            message = await channel.fetch_message(id)
+            await message.edit(embed=embed)
+            logging.info(f"OLD MESSAGE SENT")
+        except (discord.NotFound) as e:
+            message = await channel.send(embed=embed)
+            logging.info(f"NEW MESSAGE SENT {message.id} due to {e}")
+            DATABASE.updateMessageID(message.id)
+        except (discord.Forbidden):
+            logging.error("Unable to edit due to permission error") 
+        except (discord.HTTPException,aiohttp_ClientError,asyncio.TimeoutError) as e:
+            logging.warning(f"Temporary error: Unable to edit message due to {e}")

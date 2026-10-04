@@ -1,11 +1,21 @@
 import asyncio
 import logging
-import discord 
+import discord
+from aiohttp import ClientError as aiohttp_ClientError
+
 from src.config import DATABASE
 from src.mod_update.getSteamInformation import getModlistInformationLoop
 from src.mod_update import SteamMod, SteamStoreProcessedModlist
 MOD_REMINDER_CHECK_TIMEOUT = 100
 
+async def sendModReminderMessage(channel:discord.TextChannel,message_value):
+    try:
+        message = await channel.send(message_value)
+        logging.info(f"mod reminder message sent at {message.id}")
+    except (discord.Forbidden):
+        logging.error("Unable to edit due to permission error") 
+    except (discord.HTTPException,aiohttp_ClientError,asyncio.TimeoutError) as e:
+        logging.warning(f"Temporary error: Unable to edit message due to {e}")
 
 async def sendModUpdateReminder(name:str,values:SteamStoreProcessedModlist,updatedModIDs:list[int],bot:discord.Client):
     """
@@ -21,7 +31,7 @@ async def sendModUpdateReminder(name:str,values:SteamStoreProcessedModlist,updat
 
     channel = bot.get_channel(values.channelID)
     if isinstance(channel, discord.TextChannel):
-        message = await channel.send(message)
+        message = await sendModReminderMessage(channel,message)
        
 async def modReminderLoop(name:str,values:SteamStoreProcessedModlist,client:discord.Client):
     while True:
