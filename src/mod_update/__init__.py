@@ -164,6 +164,8 @@ class ModUpdateReminder(app_commands.Group):
                 logging.info(f"[MODLIST-COG] Modlist {modlist.name} already exists updating the existing modlist")
                 oldModlist = DATABASE.guildDATA.serverModlists.get(modlist.name)
                 if oldModlist:
+                    payload.channelID = oldModlist.channelID
+                    payload.roleID = oldModlist.roleID
                     DATABASE.modifyModlist(modlist.name,modlist.name,oldModlist,payload)
                     modlist_loop_tasks.append(asyncio.create_task(modReminderLoop(modlist.name, payload,self.client)))
                     view = AddModlistPrompt(modlist.name,payload)
