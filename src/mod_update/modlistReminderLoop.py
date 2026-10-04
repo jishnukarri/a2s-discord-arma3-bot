@@ -35,38 +35,41 @@ async def sendModUpdateReminder(name:str,values:SteamStoreProcessedModlist,updat
        
 async def modReminderLoop(name:str,values:SteamStoreProcessedModlist,client:discord.Client):
     while True:
-        logging.info(f"[MODLIST-LOOP] starting loop for {name}")
-        logging.info("[MODLIST-LOOP] requesting data for all ")
-        # Copy the previous state before querying; the fetched list becomes
-        # the baseline for the next iteration.
-        oldModlist = list(values.modlist)
-        updatedModlist = await asyncio.to_thread(getModlistInformationLoop,oldModlist)
-        logging.info("[MODLIST-LOOP] checking for updated mods")
-        if updatedModlist is not None:
-            oldModlistDict = {m.id: m for m in oldModlist}
-            updatedModlistDict = {n.id: n for n in updatedModlist}
-
-            _keys = oldModlistDict.keys() & updatedModlistDict.keys()
-
-            # UPDATED MODS 
-            _updated_mod_keys = []
-            # checking if they got updated
-            for id in _keys:
-                if oldModlistDict[id].lastUpdated < updatedModlistDict[id].lastUpdated:
-                    _updated_mod_keys.append(id)
-            logging.info(f"[MODLIST-LOOP] loop completed sucessfully for {name}")
-
-            exstingData = DATABASE.guildDATA.serverModlists.get(name)
-            if exstingData:
-                dbPayload = SteamStoreProcessedModlist(
-                    modlist=updatedModlist,
-                    channelID=exstingData.channelID,
-                    roleID=exstingData.roleID
-                )
-                if len(_updated_mod_keys) > 0:
-                    await sendModUpdateReminder(name,dbPayload,_updated_mod_keys,client)
-                DATABASE.modifyModlist(name,name,exstingData,dbPayload)
-                values.modlist = updatedModlist
-        else:
-            logging.info("[MODLIST-LOOP] steam failed to respond to query")
+        try:
+            logging.info(f"[MODLIST-LOOP] starting loop for {name}")
+            logging.info("[MODLIST-LOOP] requesting data for all ")
+            # Copy the previous state before querying; the fetched list becomes
+            # the baseline for the next iteration.
+            oldModlist = list(values.modlist)
+            updatedModlist = await asyncio.to_thread(getModlistInformationLoop,oldModlist)
+            logging.info("[MODLIST-LOOP] checking for updated mods")
+            if updatedModlist is not None:
+                oldModlistDict = {m.id: m for m in oldModlist}
+                updatedModlistDict = {n.id: n for n in updatedModlist}
+    
+                _keys = oldModlistDict.keys() & updatedModlistDict.keys()
+    
+                # UPDATED MODS 
+                _updated_mod_keys = []
+                # checking if they got updated
+                for id in _keys:
+                    if oldModlistDict[id].lastUpdated < updatedModlistDict[id].lastUpdated:
+                        _updated_mod_keys.append(id)
+                logging.info(f"[MODLIST-LOOP] loop completed sucessfully for {name}")
+    
+                exstingData = DATABASE.guildDATA.serverModlists.get(name)
+                if exstingData:
+                    dbPayload = SteamStoreProcessedModlist(
+                        modlist=updatedModlist,
+                        channelID=exstingData.channelID,
+                        roleID=exstingData.roleID
+                    )
+                    if len(_updated_mod_keys) > 0:
+                        await sendModUpdateReminder(name,dbPayload,_updated_mod_keys,client)
+                    DATABASE.modifyModlist(name,name,exstingData,dbPayload)
+                    values.modlist = updatedModlist
+                else:
+                    logging.info("[MODLIST-LOOP] steam failed to respond to query")
+        except Exception as e:
+            logging.exception(f"[MODLIST-LOOP] loop failed for {name}")
         await asyncio.sleep(MOD_REMINDER_CHECK_TIMEOUT)
