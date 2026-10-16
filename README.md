@@ -1,11 +1,28 @@
-# Discord Server Status Bot
+# Arma 3 Community Status Bot
 
-This project is a2s discord bot which displays server status for a2s servers. It was specfially built for arma3 servers(this version only supports arma3servers)
+A community discord bot which aims to help group admins to manage their Arma 3 Server(s)
 
-# Install
-Requirements: UV(python package manager), Python 3.14
+## Description
 
-* Clone Repository: ``` git clone https://github.com/jishnukarri/a2s-discord-arma3-bot.git```
+This bot helps admins by allowing them to manage their modlist by sending them reminders when a mod updates, etc. This is done through using the SteamAPI interface(<b>CURRENTLY DOESN'NT SUPPORT PRIVATE/UNLISTED MODS</b>). It also helps to show a server status which allows players and admins to track thier current server status like number of people playing,kills and time played per player.
+
+
+### Screenshots
+
+![Screenshort  - Server Status](/screenshort1.png)
+![Screenshort  - Mod Update Reminder Message](/screenshort2.webp)
+
+## Getting Started
+
+### Dependencies
+
+* Python 3.14 or above
+* [uv](https://docs.astral.sh/uv/) - Python package manager built in rust!!
+* 
+### Installing
+
+* Download Python([which uv can do](https://docs.astral.sh/uv/guides/install-python/)) & [UV](https://docs.astral.sh/uv/#installation) from their offical sources   
+* Clone Repository: ```git clone https://github.com/jishnukarri/a2s-discord-arma3-bot.git```
 * Add Config for the Both: 
     1. Copy the `.env.example` and rename it as `.env`
     2. Go to [discord developer portal](https://discord.com/developers/applications) and get `CLIENT_TOKEN` and add it to the env file
@@ -13,18 +30,31 @@ Requirements: UV(python package manager), Python 3.14
     4. `DATABASE_FILE` - is the file where all the information is stored
     6. `STEAM_API_KEY` is for mod update reminders
     7. Run ```uv run main.py``` to initlize the database and shut it down after 30s
-    8. Edit the `DATABASE_FILE` file and its done!
+    8. Edit the `DATABASE_FILE` file in the root folder of the project and run it!
 * Run the bot: ```uv run main.py```
 
-# Example Screenshort
+### Executing program
 
-![Screenshort  - Server Status](/screenshort1.png)
-![Screenshort  - Mod Update Reminder Message](/screenshort2.webp)
+* Use a command line interface and type
+```
+cd ...\path\to\project
+```
+* Run the project initalisation script
+```
+uv sync
+```
+* Run the bot!
+```
+uv run main.py
+```
 
-# Tested Games
-Arma 3 **ONLY**
 
-# Motivation
-However, since the idea changed a bittt from fixing the old bot to making a server management bot... The reasson is <b>I LOVE ARMA 3 😭</b> and from my experience of setting up multiple servers is that everyone wants to see if the servers up and everytime i had to do that. It was either that i had to go onto the server and check or use a free bot like Game Server Status which is very general and updates like maybe every 5 mins and it doesnt offer specfic features to arma 3 like modlist reminders etc. i meann stuff exist for it but its all over the place and this just gets it all into one...
+## Help
 
-:) hope it helps
+<b>CURRENT ONLY SUPPORTS ARMA 3 - FUTURE WILL INCLUDE MORE STEAM GAMES</b>
+
+
+
+## License
+
+This project is licensed as per [LICENSE](/LICENSE.md).
