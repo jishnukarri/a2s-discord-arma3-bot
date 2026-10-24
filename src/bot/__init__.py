@@ -110,6 +110,14 @@ class Bot(discord.Client):
                     value=f"```\n {server.getTable} \n```",
                     inline=False,
                 )
+
+        # nothing to show - no servers are online or added
+        if len(embed.fields) == 0:
+            if len(servers) == 0:
+                embed.description = "No servers have been added yet."
+            else:
+                embed.description = "🔴 No servers are online right now."
+
         if DATABASE.guildDATA.showUpdatedTimeStamp == True:
             embed.timestamp = datetime.datetime.now()
 
