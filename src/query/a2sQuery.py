@@ -22,7 +22,7 @@ class Arma3Query:
         self.lastUpdated: float = 0
         self.running: bool = True
         self.failedRetries: int = 0  # no.of times server failed to respond
-        self.delayedTimeout = 10  # stays 10 if server is active; changes to 60 if the server failes to respond over 1000 times
+        self.delayedTimeout = 10  # stays 10 if server is active; changes to 60 after 200 failures in a row
         self.autoLoopTask = asyncio.create_task(self.loopServerUpdates())
 
     def _dataUpdated(self):
@@ -35,14 +35,14 @@ class Arma3Query:
             await asyncio.to_thread(self._getInfo)
             await asyncio.to_thread(self._getPlayers)
 
+
             if self.failedRetries >= 200:
                 self.delayedTimeout = 60
+            else:
+                self.delayedTimeout = 10
 
             if oldUpdated < self.lastUpdated:
-                logging.info(f"Data has been auto-updated for {self.serverTuple}")
-                if self.delayedTimeout == 60:
-                    self.failedRetries = 0
-                    self.delayedTimeout = 10
+                logging.debug(f"Data has been auto-updated for {self.serverTuple}")
 
             await asyncio.sleep(self.delayedTimeout)
 
@@ -60,18 +60,19 @@ class Arma3Query:
                 passwordProtected=info.password_protected,
                 mapName=info.map_name,
             )
-            logging.info(f"Current information for {self.serverTuple} has been updated")
+            logging.debug(f"Current information for {self.serverTuple} has been updated")
+            self.failedRetries = 0  # reset the consecutive-failure counter
             self._dataUpdated()
             pass
         except(BufferExhaustedError,TimeoutError):
-            logging.error("Server is unable to respond to query", exc_info=True)
             self.failedRetries += 1
+            logging.warning(f"{self.serverTuple} did not respond to info query ({self.failedRetries} in a row)")
         except BrokenMessageError:
-            logging.warning("Server failed to send a proper message", exc_info=True)
             self.failedRetries += 1
+            logging.warning(f"{self.serverTuple} sent a broken info reply ({self.failedRetries} in a row)")
         except Exception as e:
-            logging.warning(f"Server failed due to {e}", exc_info=True)
             self.failedRetries += 1
+            logging.exception(f"{self.serverTuple} info query failed unexpectedly: {e}")
 
     def _getPlayers(self):
         try:
@@ -83,15 +84,16 @@ class Arma3Query:
                 )
                 playerArray.append(_localplayer)
             self.players = playerArray
-            logging.info(f"Current player list for {self.serverTuple} has been updated")
+            logging.debug(f"Current player list for {self.serverTuple} has been updated")
+            self.failedRetries = 0  # success: reset the consecutive-failure counter
             self._dataUpdated()
             pass
         except(BufferExhaustedError,TimeoutError):
-            logging.error("Server is unable to respond to query", exc_info=True)
             self.failedRetries += 1
+            logging.warning(f"{self.serverTuple} did not respond to players query ({self.failedRetries} in a row)")
         except BrokenMessageError:
-            logging.warning("Server failed to send a proper message", exc_info=True)
             self.failedRetries += 1
+            logging.warning(f"{self.serverTuple} sent a broken players reply ({self.failedRetries} in a row)")
         except Exception as e:
-            logging.warning(f"Server failed due to {e}", exc_info=True)
             self.failedRetries += 1
+            logging.exception(f"{self.serverTuple} players query failed unexpectedly: {e}")
